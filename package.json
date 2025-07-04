@@ -10,7 +10,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@privy-io/react-auth": "^2.17.2",
+    "@mysten/sui": "^1.35.0",
+    "@noble/hashes": "^1.8.0",
+    "@privy-io/react-auth": "^2.17.3",
     "@solana/spl-token": "^0.4.13",
     "next": "^14.0.1",
     "permissionless": "*",

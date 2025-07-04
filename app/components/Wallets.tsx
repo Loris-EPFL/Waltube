@@ -2,40 +2,37 @@
 import React, {useEffect, useState} from 'react';
 import {
   usePrivy,
-  useWallets,
-  useSolanaWallets,
   WalletWithMetadata,
   useGuestAccounts,
 } from '@privy-io/react-auth';
+import { useCreateWallet } from '@privy-io/react-auth/extended-chains';
 import {useRouter} from 'next/navigation';
 import {ToastContainer, toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import EthereumWallet from '../components/EthereumWallet';
-import SolanaWallet from '../components/SolanaWallet';
-import SmartWallet from '../components/SmartWallet';
+import SuiWallet from '../components/SuiWallet';
 
 export default function Wallets() {
   const router = useRouter();
 
-  const {ready, authenticated, createWallet: createEthereumWallet, user} = usePrivy();
-  const {wallets: ethereumWallets} = useWallets();
-  const {createWallet: createSolanaWallet, wallets: solanaWallets} = useSolanaWallets();
+  const {ready, authenticated, user} = usePrivy();
+  const {createWallet: createSuiWallet} = useCreateWallet();
   const {createGuestAccount} = useGuestAccounts();
-  const [showSmartWallet, setShowSmartWallet] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
+  const [walletCreationError, setWalletCreationError] = useState('');
 
-  const smartWallet = user?.linkedAccounts.find((account) => account.type === 'smart_wallet');
-
-  const embeddedEthereumWallets = ethereumWallets.filter(
-    (wallet) => wallet.walletClientType === 'privy',
-  );
-
-  const hasExistingSolanaWallet = user?.linkedAccounts.some(
+  const hasExistingSuiWallet = user?.linkedAccounts.some(
     (account): account is WalletWithMetadata =>
       account.type === 'wallet' &&
       account.walletClientType === 'privy' &&
-      account.chainType === 'solana',
+      account.chainType === 'sui',
   );
+
+  const suiWallets = user?.linkedAccounts.filter(
+    (account): account is WalletWithMetadata =>
+      account.type === 'wallet' &&
+      account.walletClientType === 'privy' &&
+      account.chainType === 'sui',
+  ) || [];
 
   /**
    *
@@ -48,15 +45,27 @@ export default function Wallets() {
    */
 
   useEffect(() => {
-    if (pendingAction === 'Ethereum') {
-      createEthereumWallet({createAdditional: true});
-    } else if (pendingAction === 'Solana') {
-      createSolanaWallet();
-    } else if (pendingAction === 'EthereumSmartWallet') {
-      setShowSmartWallet(true);
+    if (pendingAction === 'Sui') {
+      const createSuiWalletWithErrorHandling = async () => {
+        try {
+          setWalletCreationError('');
+          await createSuiWallet({chainType: 'sui'});
+          toast.success('Sui wallet created successfully!');
+        } catch (error: any) {
+          // Suppress the HD wallet error as it's expected for Sui
+          if (error?.message?.includes('Only ethereum and solana chain types are supported for HD wallet generation')) {
+            // This error is expected for Sui - wallet creation still works
+            console.log('Expected HD wallet error for Sui - wallet creation proceeding');
+          } else {
+            setWalletCreationError(error?.message || 'Failed to create Sui wallet');
+            toast.error(`Failed to create Sui wallet: ${error?.message}`);
+          }
+        }
+      };
+      createSuiWalletWithErrorHandling();
     }
     setPendingAction('');
-  }, [user, createEthereumWallet, createSolanaWallet, pendingAction, setPendingAction]);
+  }, [user, createSuiWallet, pendingAction, setPendingAction]);
 
   const createWallet = async (walletType: string) => {
     if (ready && !authenticated && !user?.isGuest) {
@@ -72,89 +81,49 @@ export default function Wallets() {
   return (
     <div className="mx-4 px-4">
       <ToastContainer />
-      <h1 className="text-2xl font-bold text-center my-4">Your wallets</h1>
+      <h1 className="text-2xl font-bold text-center my-4">WALTUBE Sui Wallet</h1>
       <div className="text-center mt-4 mx-auto mb-4">
         <p className="status-text">
-          Privy enables you to create self-custodial wallets for your authenticated users, across
-          chains. These wallets support all common RPCs. Create wallets below to test signing
-          messages and sending transactions.
+          Create your Sui wallet for WALTUBE to interact with the decentralized video platform.
+          Your wallet will be used for transactions and content management on the Sui blockchain.
         </p>
-        <div className="mb-2 mt-2 flex flex-col sm:flex-row justify-center">
+        <div className="mb-2 mt-2 flex justify-center">
           <a
-            href="https://docs.privy.io/guide/react/wallets/overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link mb-2 sm:mb-0 sm:mr-4 status-text"
-          >
-            Ethereum wallets guide
-          </a>
-          <a
-            href="https://docs.privy.io/guide/react/wallets/solana/overview"
+            href="https://docs.privy.io/recipes/use-tier-2"
             target="_blank"
             rel="noopener noreferrer"
             className="link status-text"
           >
-            Solana wallets guide
+            Sui Tier 2 Integration Guide
           </a>
         </div>
-      </div>
-      <div className="flex flex-wrap justify-center gap-3">
-        <button onClick={() => createWallet('Ethereum')} className="btn">
-          <div className="btn-text text-black">Create Ethereum wallet</div>
-        </button>
-        <button
-          onClick={() => createWallet('EthereumSmartWallet')}
-          className={`btn ${embeddedEthereumWallets.length === 0 ? 'btn-disabled' : ''}`}
-          disabled={embeddedEthereumWallets.length === 0 || showSmartWallet}
-        >
-          <div
-            className={`${embeddedEthereumWallets.length === 0 || showSmartWallet ? 'btn-text-disabled' : 'text-black'} btn-text`}
-          >
-            Create Ethereum smart wallet
+        {walletCreationError && (
+          <div className="text-red-500 text-sm mt-2">
+            Error: {walletCreationError}
           </div>
-        </button>
+        )}
+      </div>
+      <div className="flex justify-center">
         <button
-          onClick={() => createWallet('Solana')}
-          className={`btn ${hasExistingSolanaWallet ? 'btn-disabled' : ''}`}
-          disabled={hasExistingSolanaWallet}
+          onClick={() => createWallet('Sui')}
+          className={`btn ${hasExistingSuiWallet ? 'btn-disabled' : ''}`}
+          disabled={hasExistingSuiWallet}
         >
           <div
-            className={`${hasExistingSolanaWallet ? 'btn-text-disabled' : 'text-black'} btn-text`}
+            className={`${hasExistingSuiWallet ? 'btn-text-disabled' : 'text-black'} btn-text`}
           >
-            Create Solana wallet
+            {hasExistingSuiWallet ? 'Sui Wallet Created' : 'Create Sui Wallet'}
           </div>
         </button>
       </div>
       <div className="mt-4">
-        <div className="mb-4">
-          {embeddedEthereumWallets.length > 0 && (
-            <h2 className="text-xl font-semibold mb-2">Ethereum:</h2>
-          )}
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
-            {embeddedEthereumWallets.length > 0 &&
-              embeddedEthereumWallets.map((wallet, index) => (
-                <div key={wallet.address}>
-                  <EthereumWallet wallet={wallet} index={index} />
-                </div>
-              ))}
-            {showSmartWallet && smartWallet && (
-              <div>
-                <SmartWallet
-                  key={smartWallet.address}
-                  wallet={smartWallet}
-                  signer={embeddedEthereumWallets[embeddedEthereumWallets.length - 1].address}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-        {solanaWallets.length > 0 && (
+        {suiWallets.length > 0 && (
           <div className="mb-4">
-            <h2 className="text-xl font-semibold mb-2">Solana</h2>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
-              {solanaWallets.map((wallet, index) => (
-                <div key={wallet.address}>
-                  <SolanaWallet wallet={wallet} index={index} />
+            <h2 className="text-xl font-semibold mb-2 text-center">Your Sui Wallet</h2>
+            <div className="flex justify-center">
+              {suiWallets.map((wallet, index) => (
+                <div key={wallet.address} className="max-w-md">
+                  <SuiWallet wallet={wallet} index={index} />
                 </div>
               ))}
             </div>

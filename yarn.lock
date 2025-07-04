@@ -5,6 +5,31 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@0no-co/graphql.web@npm:^1.0.5":
+  version: 1.1.2
+  resolution: "@0no-co/graphql.web@npm:1.1.2"
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+  peerDependenciesMeta:
+    graphql:
+      optional: true
+  checksum: 10c0/7074de29681f0563cb9a90d702c7cda4443dce858e09f9a09adbafe32c302890cab81959ccba4ed7ac3e332423b2928a1dc95dd4a5004e6a5c156b733caa349a
+  languageName: node
+  linkType: hard
+
+"@0no-co/graphqlsp@npm:^1.12.13":
+  version: 1.13.0
+  resolution: "@0no-co/graphqlsp@npm:1.13.0"
+  dependencies:
+    "@gql.tada/internal": "npm:^1.0.0"
+    graphql: "npm:^15.5.0 || ^16.0.0 || ^17.0.0"
+  peerDependencies:
+    graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
+    typescript: ^5.0.0
+  checksum: 10c0/4217f6b84a71b47af8b351567c2c25fecfe0d9976837dd9b987b65c099afe3f9304f51ad06dbfc4bd644ddef3d0f12b403088136619ca87ff6b0775f954ccf9e
+  languageName: node
+  linkType: hard
+
 "@adraffy/ens-normalize@npm:^1.10.1, @adraffy/ens-normalize@npm:^1.11.0":
   version: 1.11.0
   resolution: "@adraffy/ens-normalize@npm:1.11.0"
@@ -526,6 +551,49 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@gql.tada/cli-utils@npm:1.6.3":
+  version: 1.6.3
+  resolution: "@gql.tada/cli-utils@npm:1.6.3"
+  dependencies:
+    "@0no-co/graphqlsp": "npm:^1.12.13"
+    "@gql.tada/internal": "npm:1.0.8"
+    graphql: "npm:^15.5.0 || ^16.0.0 || ^17.0.0"
+  peerDependencies:
+    "@0no-co/graphqlsp": ^1.12.13
+    "@gql.tada/svelte-support": 1.0.1
+    "@gql.tada/vue-support": 1.0.1
+    graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
+    typescript: ^5.0.0
+  peerDependenciesMeta:
+    "@gql.tada/svelte-support":
+      optional: true
+    "@gql.tada/vue-support":
+      optional: true
+  checksum: 10c0/5a2a8e8c082fc63ae497d569e6ffec8ff2e4a58456b92c7d0b82ab3f68f5ac2a63c011f5fcd046f161240cb2661f9c3ab152cc0d977f33fa5016ea341d20c22b
+  languageName: node
+  linkType: hard
+
+"@gql.tada/internal@npm:1.0.8, @gql.tada/internal@npm:^1.0.0":
+  version: 1.0.8
+  resolution: "@gql.tada/internal@npm:1.0.8"
+  dependencies:
+    "@0no-co/graphql.web": "npm:^1.0.5"
+  peerDependencies:
+    graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
+    typescript: ^5.0.0
+  checksum: 10c0/dd9b34296160f7eb4374b1791dd9353fd4147f4d7e2a3a8e2974c2319dc6165a4458c19d9b517a3f7764da4e7a4401c099fdf1936841de02c0e565db95d64a5d
+  languageName: node
+  linkType: hard
+
+"@graphql-typed-document-node/core@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "@graphql-typed-document-node/core@npm:3.2.0"
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: 10c0/94e9d75c1f178bbae8d874f5a9361708a3350c8def7eaeb6920f2c820e82403b7d4f55b3735856d68e145e86c85cbfe2adc444fdc25519cd51f108697e99346c
+  languageName: node
+  linkType: hard
+
 "@headlessui/react@npm:^2.2.0":
   version: 2.2.4
   resolution: "@headlessui/react@npm:2.2.4"
@@ -818,6 +886,45 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mysten/bcs@npm:1.6.3":
+  version: 1.6.3
+  resolution: "@mysten/bcs@npm:1.6.3"
+  dependencies:
+    "@mysten/utils": "npm:0.1.0"
+    "@scure/base": "npm:^1.2.6"
+  checksum: 10c0/51ccce153f43de2a3b3c1be61052bee2cf0256589214ca7bc7f39f2171e8664c31e140dbec1c913eb5282811f6468e45d5a4fc95db94a53c25b3e6fee899d438
+  languageName: node
+  linkType: hard
+
+"@mysten/sui@npm:^1.35.0":
+  version: 1.35.0
+  resolution: "@mysten/sui@npm:1.35.0"
+  dependencies:
+    "@graphql-typed-document-node/core": "npm:^3.2.0"
+    "@mysten/bcs": "npm:1.6.3"
+    "@mysten/utils": "npm:0.1.0"
+    "@noble/curves": "npm:^1.9.1"
+    "@noble/hashes": "npm:^1.8.0"
+    "@scure/base": "npm:^1.2.6"
+    "@scure/bip32": "npm:^1.7.0"
+    "@scure/bip39": "npm:^1.6.0"
+    gql.tada: "npm:^1.8.2"
+    graphql: "npm:^16.11.0"
+    poseidon-lite: "npm:^0.2.0"
+    valibot: "npm:^0.36.0"
+  checksum: 10c0/4c5a19b156669b6ef2fbbba05532c163490c30c1b5970edebebeffbcf397b45b8c49e2732acba7f39f7b4d8837b054f9eb39896ff6c1cdeb794c8640b8ca4401
+  languageName: node
+  linkType: hard
+
+"@mysten/utils@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@mysten/utils@npm:0.1.0"
+  dependencies:
+    "@scure/base": "npm:^1.2.6"
+  checksum: 10c0/8717872edde456599f7f1bbeb4cdd9cbf985cdb2391cafedd8c12d1b015da2610a6e77fefa256f332236cc6239cf4fee2a5e3f9dba9c14a49f119ebc9a070942
+  languageName: node
+  linkType: hard
+
 "@napi-rs/wasm-runtime@npm:^0.2.11":
   version: 0.2.11
   resolution: "@napi-rs/wasm-runtime@npm:0.2.11"
@@ -1106,9 +1213,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@privy-io/js-sdk-core@npm:0.52.3":
-  version: 0.52.3
-  resolution: "@privy-io/js-sdk-core@npm:0.52.3"
+"@privy-io/js-sdk-core@npm:0.52.4":
+  version: 0.52.4
+  resolution: "@privy-io/js-sdk-core@npm:0.52.4"
   dependencies:
     "@ethersproject/abstract-signer": "npm:^5.7.0"
     "@ethersproject/bignumber": "npm:^5.7.0"
@@ -1118,7 +1225,7 @@ __metadata:
     "@ethersproject/units": "npm:^5.7.0"
     "@privy-io/api-base": "npm:1.5.2"
     "@privy-io/chains": "npm:0.0.2"
-    "@privy-io/public-api": "npm:2.37.0"
+    "@privy-io/public-api": "npm:2.37.1"
     canonicalize: "npm:^2.0.0"
     eventemitter3: "npm:^5.0.1"
     fetch-retry: "npm:^6.0.0"
@@ -1135,26 +1242,26 @@ __metadata:
       optional: true
     viem:
       optional: true
-  checksum: 10c0/be4594c2a9b7df389884d47076b0ed762589ea4dc7a5e363fe12f1f529c84665750b43af5a245e58a08eb8fff2ae77c9456e3a30ffc0ac876037b25c7ce3ad06
+  checksum: 10c0/46decc89659e623815319bcf4a092ab18ada6be41b1bbb965283c76918c12d7f49deb8aad47061e6bad0bf110cdce70bc20faf67c78f107602b41a2011ae2f2f
   languageName: node
   linkType: hard
 
-"@privy-io/public-api@npm:2.37.0":
-  version: 2.37.0
-  resolution: "@privy-io/public-api@npm:2.37.0"
+"@privy-io/public-api@npm:2.37.1":
+  version: 2.37.1
+  resolution: "@privy-io/public-api@npm:2.37.1"
   dependencies:
     "@privy-io/api-base": "npm:1.5.2"
     bs58: "npm:^5.0.0"
     libphonenumber-js: "npm:^1.10.31"
     viem: "npm:^2"
     zod: "npm:^3.24.3"
-  checksum: 10c0/a9c04f34a44a3c50bd8f95d5488a6240133c58e25494974ae8602f4f36a9ab8c8ea6fc06d3fb6c37a97807a40da4916f131dc512402bce21239163ce4c9cbc16
+  checksum: 10c0/2880c56d0a62d8af692727d6d247ae152b0968e9879a70851b947a7044bfe6a3b52078a548b690664e2a98d36ac0b78ac05733997f741ac67da7ffd2ca2a68ac
   languageName: node
   linkType: hard
 
-"@privy-io/react-auth@npm:^2.17.2":
-  version: 2.17.2
-  resolution: "@privy-io/react-auth@npm:2.17.2"
+"@privy-io/react-auth@npm:^2.17.3":
+  version: 2.17.3
+  resolution: "@privy-io/react-auth@npm:2.17.3"
   dependencies:
     "@coinbase/wallet-sdk": "npm:4.3.2"
     "@floating-ui/react": "npm:^0.26.22"
@@ -1165,14 +1272,15 @@ __metadata:
     "@privy-io/api-base": "npm:1.5.2"
     "@privy-io/chains": "npm:0.0.2"
     "@privy-io/ethereum": "npm:0.0.2"
-    "@privy-io/js-sdk-core": "npm:0.52.3"
-    "@privy-io/public-api": "npm:2.37.0"
+    "@privy-io/js-sdk-core": "npm:0.52.4"
+    "@privy-io/public-api": "npm:2.37.1"
     "@reown/appkit": "npm:^1.7.11"
     "@scure/base": "npm:^1.2.5"
     "@simplewebauthn/browser": "npm:^9.0.1"
     "@solana/wallet-adapter-base": "npm:0.9.23"
     "@solana/wallet-standard-wallet-adapter-base": "npm:^1.1.2"
     "@solana/wallet-standard-wallet-adapter-react": "npm:^1.1.2"
+    "@tanstack/react-virtual": "npm:^3.13.10"
     "@wallet-standard/app": "npm:^1.0.1"
     "@walletconnect/ethereum-provider": "npm:2.19.2"
     base64-js: "npm:^1.5.1"
@@ -1212,7 +1320,7 @@ __metadata:
       optional: true
     permissionless:
       optional: true
-  checksum: 10c0/19b3d6881d4c3eb8c5f04ca681ec526c581d3becb5f9bf4edc333d256f0f6edddeeffd0549e5bfd4802f2c685a46a840475fc69f29837b957084e4a0671fc055
+  checksum: 10c0/6a89675d00f5c3f914442c337e8ab103801ea28333523c8254a561e166dd7f05ef8989cfe058247c0e4167936ca33e6f3e9a1eec14cd42c207aa56420b553315
   languageName: node
   linkType: hard
 
@@ -1446,7 +1554,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/base@npm:1.2.6, @scure/base@npm:^1.2.5, @scure/base@npm:~1.2.2, @scure/base@npm:~1.2.4, @scure/base@npm:~1.2.5":
+"@scure/base@npm:1.2.6, @scure/base@npm:^1.2.5, @scure/base@npm:^1.2.6, @scure/base@npm:~1.2.2, @scure/base@npm:~1.2.4, @scure/base@npm:~1.2.5":
   version: 1.2.6
   resolution: "@scure/base@npm:1.2.6"
   checksum: 10c0/49bd5293371c4e062cb6ba689c8fe3ea3981b7bb9c000400dc4eafa29f56814cdcdd27c04311c2fec34de26bc373c593a1d6ca6d754398a488d587943b7c128a
@@ -1868,7 +1976,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-virtual@npm:^3.13.9":
+"@tanstack/react-virtual@npm:^3.13.10, @tanstack/react-virtual@npm:^3.13.9":
   version: 3.13.12
   resolution: "@tanstack/react-virtual@npm:3.13.12"
   dependencies:
@@ -4847,6 +4955,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"gql.tada@npm:^1.8.2":
+  version: 1.8.11
+  resolution: "gql.tada@npm:1.8.11"
+  dependencies:
+    "@0no-co/graphql.web": "npm:^1.0.5"
+    "@0no-co/graphqlsp": "npm:^1.12.13"
+    "@gql.tada/cli-utils": "npm:1.6.3"
+    "@gql.tada/internal": "npm:1.0.8"
+  peerDependencies:
+    typescript: ^5.0.0
+  bin:
+    gql-tada: bin/cli.js
+    gql.tada: bin/cli.js
+  checksum: 10c0/ae54c48c20b6d043f2319029c61222957123cf3cf5666de17d2d8f384a3a779256518b1b5794af2b0c1d1dd566e761811daf80d3c5f245f00c065a158ed14e9e
+  languageName: node
+  linkType: hard
+
 "graceful-fs@npm:^4.2.11, graceful-fs@npm:^4.2.6":
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
@@ -4858,6 +4983,13 @@ __metadata:
   version: 1.4.0
   resolution: "graphemer@npm:1.4.0"
   checksum: 10c0/e951259d8cd2e0d196c72ec711add7115d42eb9a8146c8eeda5b8d3ac91e5dd816b9cd68920726d9fd4490368e7ed86e9c423f40db87e2d8dfafa00fa17c3a31
+  languageName: node
+  linkType: hard
+
+"graphql@npm:^15.5.0 || ^16.0.0 || ^17.0.0, graphql@npm:^16.11.0":
+  version: 16.11.0
+  resolution: "graphql@npm:16.11.0"
+  checksum: 10c0/124da7860a2292e9acf2fed0c71fc0f6a9b9ca865d390d112bdd563c1f474357141501c12891f4164fe984315764736ad67f705219c62f7580681d431a85db88
   languageName: node
   linkType: hard
 
@@ -6612,6 +6744,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"poseidon-lite@npm:^0.2.0":
+  version: 0.2.1
+  resolution: "poseidon-lite@npm:0.2.1"
+  checksum: 10c0/b1da834c8e1e8db3d8d1e8bfcbac5b5b5abbd3aa65e0a80206f8dfa09c9e858b8bc8d5291596e03c8845505af7982c6c2574fe5b184ce256dc34de9ea325b466
+  languageName: node
+  linkType: hard
+
 "possible-typed-array-names@npm:^1.0.0":
   version: 1.1.0
   resolution: "possible-typed-array-names@npm:1.1.0"
@@ -8348,6 +8487,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"valibot@npm:^0.36.0":
+  version: 0.36.0
+  resolution: "valibot@npm:0.36.0"
+  checksum: 10c0/deff84cdcdc324d5010c2087e553cd26b07752ac18912c9152eccd241b507a49a9ad77fed57501d45bcbef9bec6a7a6707b17d9bef8d35e681d45f098a70e466
+  languageName: node
+  linkType: hard
+
 "valtio@npm:1.11.2":
   version: 1.11.2
   resolution: "valtio@npm:1.11.2"
@@ -8559,7 +8705,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "whitelabel-starter@workspace:."
   dependencies:
-    "@privy-io/react-auth": "npm:^2.17.2"
+    "@mysten/sui": "npm:^1.35.0"
+    "@noble/hashes": "npm:^1.8.0"
+    "@privy-io/react-auth": "npm:^2.17.3"
     "@solana/spl-token": "npm:^0.4.13"
     "@types/node": "npm:^20"
     "@types/react": "npm:^18"
