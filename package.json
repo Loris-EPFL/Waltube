@@ -10,10 +10,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@mysten/dapp-kit": "^0.16.14",
     "@mysten/sui": "^1.35.0",
     "@noble/hashes": "^1.8.0",
     "@privy-io/react-auth": "^2.17.3",
     "@solana/spl-token": "^0.4.13",
+    "@tusky-io/ts-sdk": "^0.32.0",
     "next": "^14.0.1",
     "permissionless": "*",
     "react": "^18.2.0",
