@@ -209,15 +209,29 @@ const VideoUploadPage: React.FC = () => {
     }
 
     try {
-      // Convert segments to serializable format
+      // Convert segments to serializable format with proper base64 encoding
       const segmentsData = await Promise.all(
-        segments.map(async (segment) => {
+        segments.map(async (segment, index) => {
           const arrayBuffer = await segment.blob.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Use FileReader for safe base64 conversion to avoid stack overflow
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              // Remove the data URL prefix to get just the base64 data
+              const base64Data = result.split(',')[1];
+              resolve(base64Data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(segment.blob);
+          });
+          
           return {
-            duration: segment.duration,
-            index: segment.index,
-            blobData: base64
+            name: `segment_${index.toString().padStart(3, '0')}.webm`,
+            data: base64,
+            size: segment.blob.size
           };
         })
       );
@@ -230,14 +244,17 @@ const VideoUploadPage: React.FC = () => {
       
       segments.forEach((segment, index) => {
         playlistContent += `#EXTINF:${segment.duration.toFixed(6)},\n`;
-        playlistContent += `segments/segment_${index.toString().padStart(3, '0')}.webm\n`;
+        playlistContent += `segment_${index.toString().padStart(3, '0')}.webm\n`;
       });
       
       playlistContent += '#EXT-X-ENDLIST\n';
 
       // Save to localStorage
       localStorage.setItem('waltube_segments', JSON.stringify(segmentsData));
-      localStorage.setItem('waltube_playlist', JSON.stringify({ content: playlistContent }));
+      localStorage.setItem('waltube_playlist', JSON.stringify({ 
+        content: playlistContent,
+        fileName: 'playlist.m3u8'
+      }));
       
       toast.success('Segments and playlist saved for storage!');
     } catch (error: any) {
