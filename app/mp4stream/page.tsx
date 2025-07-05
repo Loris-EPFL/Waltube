@@ -64,6 +64,9 @@ export default function MP4StreamPage() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isSeeking, setIsSeeking] = useState(false);
+  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSeekTimeRef = useRef<number>(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -134,16 +137,33 @@ export default function MP4StreamPage() {
   };
 
   // Video event handlers
-  const handlePlay = () => setIsPlaying(true);
-  const handlePause = () => setIsPlaying(false);
+  const handlePlay = () => {
+    console.log('Video play event');
+    setIsPlaying(true);
+  };
+  const handlePause = () => {
+    console.log('Video pause event');
+    setIsPlaying(false);
+  };
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+    if (videoRef.current && !isSeeking) {
+      const currentVideoTime = videoRef.current.currentTime;
+      // Only update if the time has actually changed significantly
+      if (Math.abs(currentVideoTime - currentTime) > 0.1) {
+        setCurrentTime(currentVideoTime);
+      }
     }
   };
   const handleLoadedMetadata = () => {
+    console.log('Video metadata loaded, duration:', videoRef.current?.duration);
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
+      // Restore last seek position if video was reloaded
+      if (lastSeekTimeRef.current > 0) {
+        console.log('Restoring seek position to:', lastSeekTimeRef.current);
+        videoRef.current.currentTime = lastSeekTimeRef.current;
+        setCurrentTime(lastSeekTimeRef.current);
+      }
     }
   };
   const handleProgress = () => {
@@ -152,10 +172,22 @@ export default function MP4StreamPage() {
       setBuffered(bufferedEnd);
     }
   };
+  const handleLoadStart = () => {
+    console.log('Video load start - this might reset position');
+  };
+  const handleSeeked = () => {
+    console.log('Video seeked to:', videoRef.current?.currentTime);
+  };
+  const handleSeeking = () => {
+    const seekTime = videoRef.current?.currentTime;
+    console.log('Video seeking to:', seekTime);
+    // Just log the seeking event, don't interfere
+  };
 
   const togglePlayback = () => {
     if (videoRef.current) {
       if (isPlaying) {
+
         videoRef.current.pause();
       } else {
         videoRef.current.play();
@@ -163,11 +195,39 @@ export default function MP4StreamPage() {
     }
   };
 
+  const handleSeekInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Update visual state and store intended position
+    const newTime = parseFloat(e.target.value);
+    setCurrentTime(newTime);
+    lastSeekTimeRef.current = newTime;
+    console.log('Seek input to:', newTime);
+  };
+
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (videoRef.current) {
+    // This is called on onChange - only set video time once
+    if (videoRef.current && !isSeeking) {
       const newTime = parseFloat(e.target.value);
+      console.log('Setting video time to:', newTime);
       videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
+      lastSeekTimeRef.current = newTime;
+    }
+  };
+
+  const handleSeekStart = () => {
+    console.log('Seek start');
+    setIsSeeking(true);
+    if (seekTimeoutRef.current) {
+      clearTimeout(seekTimeoutRef.current);
+    }
+  };
+
+  const handleSeekEnd = () => {
+    console.log('Seek end');
+    // Simply reset seeking state without forcing position
+    setIsSeeking(false);
+    if (videoRef.current) {
+      console.log('Final seek position:', videoRef.current.currentTime);
+      setCurrentTime(videoRef.current.currentTime);
     }
   };
 
@@ -221,7 +281,16 @@ export default function MP4StreamPage() {
     if (video && !videoUrl) {
       streamVideo();
     }
-  }, [video]);
+  }, [video?.fileId]); // Only depend on fileId to prevent unnecessary re-renders
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (seekTimeoutRef.current) {
+        clearTimeout(seekTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -294,8 +363,12 @@ export default function MP4StreamPage() {
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onProgress={handleProgress}
+                onLoadStart={handleLoadStart}
+                onSeeked={handleSeeked}
+                onSeeking={handleSeeking}
                 onClick={handleVideoClick}
                 controls={false}
+                preload="metadata"
               />
               
               {/* Play/Pause Overlay */}
@@ -332,8 +405,13 @@ export default function MP4StreamPage() {
                   type="range"
                   min="0"
                   max={duration || 0}
-                  value={currentTime}
+                  value={isSeeking ? (videoRef.current?.currentTime || currentTime) : currentTime}
+                  onInput={handleSeekInput}
                   onChange={handleSeek}
+                  onMouseDown={handleSeekStart}
+                  onMouseUp={handleSeekEnd}
+                  onTouchStart={handleSeekStart}
+                  onTouchEnd={handleSeekEnd}
                   className="w-full h-2 bg-transparent appearance-none cursor-pointer slider"
                   style={{
                     background: 'transparent',
