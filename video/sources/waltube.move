@@ -12,8 +12,8 @@ module video::waltube {
         owner_name: String
     }
 
-    public struct User has store{
-        name: String, 
+    public struct User has store, drop {
+        name: String,
         surname: String,
         email: String,
         phone_num: String,
