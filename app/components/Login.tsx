@@ -80,101 +80,140 @@ const Login = () => {
   }, [stateSms]);
 
   return (
-    <div className="mx-4 px-4">
-      <h1 className="text-2xl font-bold text-center my-4">Authentication</h1>
-      <div className="text-center mt-4 mx-auto mb-4">
-        <p className="status-text">
-          Privy empowers your users to authenticate through multiple methods such as Email, SMS and
-          OAuth, or begin with a guest account.
-        </p>
-      </div>
-      <div className="mt-4 p-4">
-        <div className="flex flex-col">
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => {
-                console.log('click');
-                createGuestAccount();
-              }}
-              className="btn"
-            >
-              <div className="btn-text">Get started with a guest account</div>
-            </button>
-            {ready && authenticated && (
-              <button onClick={logout} className="btn">
-                <div className="btn-text text-black">Logout</div>
-              </button>
-            )}
-          </div>
-          <div>
-            <h2 className="text-xl font-bold mb-4 text-left">Email</h2>
-            <input
-              className="input mb-2 flex-grow"
-              placeholder="Enter email"
-              onChange={(e) => setEmail(e.currentTarget.value)}
-            />
-            <button
-              onClick={() => sendCodeEmail({email})}
-              className="btn wallet-button-primary mb-2"
-              disabled={emailState === 'sending-code'}
-            >
-              <div className="btn-text">Send code</div>
-            </button>
-            <input
-              className="input mb-2 flex-grow"
-              placeholder="Enter OTP"
-              onChange={(e) => setCodeEmail(e.currentTarget.value)}
-            />
-            <button
-              onClick={() => loginWithCodeEmail({code: codeEmail})}
-              className={`btn ${emailState === 'initial' ? 'btn-disabled' : 'wallet-button-primary'} mb-2`}
-              disabled={emailState === 'initial'}
-            >
-              <div className={`${emailState === 'initial' ? 'btn-text-disabled' : 'btn-text'}`}>
-                Login
-              </div>
-            </button>
-            <p className="status-text">Status: {emailState}</p>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold mb-4 text-left mt-2">SMS</h2>
-            <input
-              className="input mb-2"
-              placeholder="Enter phone number"
-              onChange={(e) => setPhoneNumber(e.currentTarget.value)}
-            />
-            <div className="text-left mb-2">
+    <div className="bg-base-100">
+      {/* Hero Section */}
+      <div className="hero bg-base-200 py-12">
+        <div className="hero-content text-center">
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold mb-4 text-base-content">🔐 Authentication</h1>
+            <p className="text-base mb-6 text-base-content/70">
+              Experience seamless Web3 authentication with Privy. Choose from multiple login methods or start as a guest.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => sendCodeSms({phoneNumber})}
-                className="btn wallet-button-primary"
-                disabled={smsState === 'sending-code'}
+                onClick={() => {
+                  console.log('click');
+                  createGuestAccount();
+                }}
+                className="btn btn-primary btn-lg shadow-md hover:shadow-lg transition-all duration-300"
               >
-                <div className="btn-text">Send code</div>
+                🎯 Start as Guest
               </button>
+              {ready && authenticated && (
+                <button onClick={logout} className="btn btn-outline btn-lg">
+                  👋 Logout
+                </button>
+              )}
             </div>
-            <input
-              className="input mb-2"
-              placeholder="Enter OTP"
-              onChange={(e) => setCodeSms(e.currentTarget.value)}
-            />
-            <div className="text-left mb-2">
-              <button
-                onClick={() => loginWithCodeSms({code: codeSms})}
-                className={`btn ${smsState === 'initial' ? 'btn-disabled' : 'wallet-button-primary'}`}
-                disabled={smsState === 'initial'}
-              >
-                <div className={`${smsState === 'initial' ? 'btn-text-disabled' : 'btn-text'}`}>
-                  Login
-                </div>
-              </button>
-            </div>
-            <p className="status-text">Status: {smsState}</p>
           </div>
         </div>
-        {/* 
-        <h2 className="text-xl font-bold mb-4 text-left mt-2">OAuth</h2>
-        <OAuth />
-        */}
+      </div>
+
+      {/* Authentication Cards Section */}
+      <div className="px-4 py-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Choose Your Login Method</h2>
+          <p className="text-base-content/70 max-w-2xl mx-auto">
+            Secure, fast, and user-friendly authentication powered by Privy's advanced infrastructure.
+          </p>
+        </div>
+
+        <div className="max-w-md mx-auto">
+          {/* Email Authentication Card */}
+          <div className="w-full bg-white rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 p-6">
+            <div className="w-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="avatar placeholder">
+                  <div className="bg-primary text-primary-content rounded-full w-12">
+                    <span className="text-xl">📧</span>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold">Email Login</h2>
+              </div>
+              
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Email Address</span>
+                </label>
+                <input
+                  type="email"
+                  className="input input-bordered w-full"
+                  placeholder="Enter your email"
+                  onChange={(e) => setEmail(e.currentTarget.value)}
+                />
+              </div>
+              
+              <button
+                onClick={() => sendCodeEmail({email})}
+                className="btn btn-primary mt-4"
+                disabled={emailState === 'sending-code'}
+              >
+                {emailState === 'sending-code' ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  '📤 Send Verification Code'
+                )}
+              </button>
+              
+              {emailState !== 'initial' && emailState !== 'sending-code' && (
+                <div className="form-control mt-4">
+                  <label className="label">
+                    <span className="label-text font-medium">Verification Code</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    placeholder="Enter 6-digit code"
+                    onChange={(e) => setCodeEmail(e.currentTarget.value)}
+                  />
+                  <button
+                    onClick={() => loginWithCodeEmail({code: codeEmail})}
+                    className="btn btn-success mt-4"
+                    disabled={emailState === 'initial'}
+                  >
+                    🔐 Login with Email
+                  </button>
+                </div>
+              )}
+              
+              <div className="alert alert-info mt-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span className="text-sm">Status: {emailState}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Features Section 
+        <div className="mt-12">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold mb-4">Why Choose Our Authentication?</h3>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="card bg-base-200 shadow-sm">
+              <div className="card-body text-center py-4">
+                <div className="text-2xl mb-2">🔒</div>
+                <h4 className="card-title justify-center text-sm">Secure</h4>
+                <p className="text-xs text-base-content/60">Enterprise-grade security</p>
+              </div>
+            </div>
+            <div className="card bg-base-200 shadow-sm">
+              <div className="card-body text-center py-4">
+                <div className="text-2xl mb-2">⚡</div>
+                <h4 className="card-title justify-center text-sm">Fast</h4>
+                <p className="text-xs text-base-content/60">Lightning-fast authentication</p>
+              </div>
+            </div>
+            <div className="card bg-base-200 shadow-sm">
+              <div className="card-body text-center py-4">
+                <div className="text-2xl mb-2">🌐</div>
+                <h4 className="card-title justify-center text-sm">Universal</h4>
+                <p className="text-xs text-base-content/60">Works on all platforms</p>
+              </div>
+            </div>
+          </div>
+        </div>
+*/}
       </div>
     </div>
   );

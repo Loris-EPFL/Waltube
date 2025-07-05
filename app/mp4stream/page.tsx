@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '../components/Navbar';
 
 // Custom styles for the range slider
 const sliderStyles = `
@@ -293,9 +294,10 @@ export default function MP4StreamPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-base-100">
+      <Navbar />
       <style dangerouslySetInnerHTML={{ __html: sliderStyles }} />
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">🎬 MP4 Video Streaming</h1>
@@ -305,44 +307,53 @@ export default function MP4StreamPage() {
         </div>
 
         {/* Connection Status */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Connection Status</h2>
-          <div className="flex items-center space-x-4">
-            <div className={`w-3 h-3 rounded-full ${
-              isConnected ? 'bg-green-500' : 'bg-red-500'
-            }`}></div>
-            <span className={isConnected ? 'text-green-700' : 'text-red-700'}>
-              {isConnected ? 'Connected to Tusky' : 'Disconnected'}
-            </span>
-            {isLoading && (
-              <div className="text-blue-600">Loading...</div>
-            )}
+        <div className="card bg-base-100 shadow-xl mb-6">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-4">Connection Status</h2>
+            <div className="flex items-center space-x-4">
+              <div className={`w-3 h-3 rounded-full ${
+                isConnected ? 'bg-success' : 'bg-error'
+              }`}></div>
+              <span className={isConnected ? 'text-success' : 'text-error'}>
+                {isConnected ? 'Connected to Tusky' : 'Disconnected'}
+              </span>
+              {isLoading && (
+                <span className="loading loading-spinner loading-sm text-primary"></span>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            <strong>Error:</strong> {error}
+          <div className="alert alert-error mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span><strong>Error:</strong> {error}</span>
           </div>
         )}
 
         {/* Video Info */}
         {video && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Video Information</h2>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Name:</span> {video.vaultName}
-              </div>
-              <div>
-                <span className="font-medium">File:</span> {video.fileName}
-              </div>
-              <div>
-                <span className="font-medium">Size:</span> {(video.fileSize / 1024 / 1024).toFixed(2)} MB
-              </div>
-              <div>
-                <span className="font-medium">Created:</span> {new Date(video.createdAt).toLocaleDateString()}
+          <div className="card bg-base-100 shadow-xl mb-6">
+            <div className="card-body">
+              <h2 className="card-title text-2xl mb-4">Video Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="stat">
+                  <div className="stat-title">Name</div>
+                  <div className="stat-value text-lg">{video.vaultName}</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">File</div>
+                  <div className="stat-value text-lg">{video.fileName}</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Size</div>
+                  <div className="stat-value text-lg">{(video.fileSize / 1024 / 1024).toFixed(2)} MB</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Created</div>
+                  <div className="stat-value text-lg">{new Date(video.createdAt).toLocaleDateString()}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -350,8 +361,9 @@ export default function MP4StreamPage() {
 
         {/* Video Player */}
         {videoUrl && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Video Player</h2>
+          <div className="card bg-base-100 shadow-xl mb-6">
+            <div className="card-body">
+              <h2 className="card-title text-2xl mb-4">Video Player</h2>
             
             <div className="relative bg-black rounded-lg overflow-hidden mb-4">
               <video
@@ -494,6 +506,7 @@ export default function MP4StreamPage() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         )}
 
@@ -501,13 +514,13 @@ export default function MP4StreamPage() {
         <div className="text-center space-x-4">
           <Link
             href="/storage"
-            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="btn btn-neutral"
           >
             ← Back to Storage
           </Link>
           {/* <Link
             href="/stream"
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="btn btn-success"
           >
             🎬 Try HLS Streaming
           </Link> */}

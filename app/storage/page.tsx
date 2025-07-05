@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Navbar from '../components/Navbar';
 
 interface VideoSegment {
   name: string;
@@ -330,9 +331,10 @@ const VideoStoragePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-base-100">
+      <Navbar />
       <ToastContainer />
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             🗄️ WALTUBE Storage
@@ -343,8 +345,9 @@ const VideoStoragePage: React.FC = () => {
         </div>
 
         {/* Tusky Connection */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Tusky Connection</h2>
+        <div className="card bg-base-100 shadow-xl mb-6">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-4">Tusky Connection</h2>
           {isInitializing ? (
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
@@ -377,6 +380,7 @@ const VideoStoragePage: React.FC = () => {
               </button>
             </div>
           )}
+          </div>
         </div>
 
         {/* Local Data Status 
@@ -458,8 +462,9 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Upload Section - MP4 Video */}
         {isConnected && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">🎬 Upload MP4 Video to Walrus</h2>
+          <div className="card bg-base-100 shadow-xl mb-6">
+            <div className="card-body">
+              <h2 className="card-title text-2xl mb-4">🎬 Upload MP4 Video to Walrus</h2>
             
             <div className="mb-4">
               <p className="text-gray-600 mb-2">
@@ -468,15 +473,15 @@ const VideoStoragePage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select MP4 File
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Select MP4 File</span>
                 </label>
                 <input
                   type="file"
                   accept="video/mp4"
                   onChange={handleMP4FileSelect}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="file-input file-input-bordered w-full"
                 />
                 {selectedMP4File && (
                   <p className="text-sm text-green-600 mt-1">
@@ -485,25 +490,32 @@ const VideoStoragePage: React.FC = () => {
                 )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Video Name
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Video Name</span>
                 </label>
                 <input
                   type="text"
                   value={mp4VideoName}
                   onChange={(e) => setMp4VideoName(e.target.value)}
                   placeholder="Enter a name for your MP4 video"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input input-bordered w-full"
                 />
               </div>
               
               <button
                 onClick={uploadMP4ToTusky}
                 disabled={isUploadingMP4 || !selectedMP4File || !mp4VideoName.trim()}
-                className="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 transition-colors"
+                className="btn btn-primary"
               >
-                {isUploadingMP4 ? 'Uploading MP4...' : 'Upload MP4 to Walrus'}
+                {isUploadingMP4 ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Uploading MP4...
+                  </>
+                ) : (
+                  'Upload MP4 to Walrus'
+                )}
               </button>
               
               {isUploadingMP4 && (
@@ -513,6 +525,7 @@ const VideoStoragePage: React.FC = () => {
                   </p>
                 </div>
               )}
+            </div>
             </div>
           </div>
         )}

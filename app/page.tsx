@@ -3,93 +3,78 @@ import {usePrivy} from '@privy-io/react-auth';
 import {useRouter} from 'next/navigation';
 import Login from './components/Login';
 import Wallets from './components/Wallets';
+import Navbar from './components/Navbar';
 
 export default function Home() {
   const {ready} = usePrivy();
   if (!ready) {
-    return <div></div>;
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100">
-      <div className="text-center p-4 rounded-lg">
-        <p className="text-2xl font-bold mb-2">Privy whitelabel starter repo</p>
-        <p className="status-text w-1/2 mx-auto">
-          Privy SDKs are directly available so you can fully control all interfaces for
-          authentication, embedded wallets, and user management. You can get started with fully
-          customized interfaces by forking our{' '}
-          <a href="https://github.com/privy-io/whitelabel-starter" className="link">
-            whitelabel starter repo.
-          </a>{' '}
-          For more information about Privy, please visit our{' '}
-          <a href="https://www.privy.io" target="_blank" rel="noopener noreferrer" className="link">
-            website
-          </a>{' '}
-          and{' '}
-          <a
-            href="https://docs.privy.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link"
-          >
-            docs
-          </a>
-          .
-        </p>
-      </div>
-
-      <div className="flex flex-col md:flex-row w-full">
-        <div className="w-full md:w-1/2">
-          <Login />
+    <div className="bg-base-200">
+      <Navbar />
+      <div className="w-full py-8">
+        {/* Main Content */}
+        <div className="w-full max-w-none mx-auto mb-12">
+          <div className="mb-8">
+            <Login />
+          </div>
+          <div className="w-full">
+            <Wallets />
+          </div>
         </div>
-        <div className="w-full md:w-1/2">
-          <Wallets />
-        </div>
-      </div>
-      
-      <div className="mt-8 text-center">
-        <div className="space-y-4">
-          <div className="flex flex-wrap justify-center gap-4">
-            {/* <a
-              href="/upload"
-              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              📤 Upload & Process Video
-            </a> */}
-            
-            <a
-              href="/storage"
-              className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
+        
+        {/* Features Section */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-8">Platform Features</h2>
+          
+          <div className="flex flex-wrap justify-center gap-6 mb-8">
+            <a href="/storage" className="btn btn-primary btn-lg gap-2 shadow-lg">
               📁 Store to Walrus
             </a>
-            
-            {/* <a
-              href="/stream"
-              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              🎬 Stream Videos
-            </a> */}
+            <a href="/storage" className="btn btn-secondary btn-lg gap-2 shadow-lg">
+              📤 Upload Videos
+            </a>
+            <a href="/mp4stream" className="btn btn-accent btn-lg gap-2 shadow-lg">
+              🎬 Stream Content
+            </a>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 max-w-4xl mx-auto">
-            {/* <div className="text-center">
-              <p className="text-gray-600">
-                Upload MP4 videos and automatically segment them into HLS format for adaptive streaming
-              </p>
-            </div> */}
-            
-            <div className="text-center">
-              <p className="text-gray-600">
-                Upload your processed video segments to Walrus storage using Tusky SDK
-              </p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="w-full bg-white rounded-lg shadow-lg p-6">
+              <div className="text-center">
+                <div className="text-4xl mb-4">📁</div>
+                <h3 className="text-lg font-bold mb-2">Walrus Storage</h3>
+                <p className="text-gray-600">
+                  Upload your processed video segments to Walrus storage using Tusky SDK for decentralized storage
+                </p>
+              </div>
             </div>
             
-            {/* <div className="text-center">
-              <p className="text-gray-600">
-                Stream your stored videos directly from Walrus with progressive loading
-              </p>
-            </div> */}
+            <div className="w-full bg-white rounded-lg shadow-lg p-6">
+              <div className="text-center">
+                <div className="text-4xl mb-4">📤</div>
+                <h3 className="text-lg font-bold mb-2">Video Upload</h3>
+                <p className="text-gray-600">
+                  Upload MP4 videos and automatically store them into Walrus, and share / sell them.
+                </p>
+              </div>
+            </div>
+            
+            <div className="w-full bg-white rounded-lg shadow-lg p-6">
+              <div className="text-center">
+                <div className="text-4xl mb-4">🎬</div>
+                <h3 className="text-lg font-bold mb-2">Video Streaming</h3>
+                <p className="text-gray-600">
+                  Stream your stored videos directly from Walrus with progressive loading and high quality
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

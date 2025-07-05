@@ -319,131 +319,207 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
    };
 
   return (
-    <div className="wallet-container">
-      <h3 className="wallet-header">Sui wallet {index + 1}</h3>
-      <p className="wallet-address">
-        <span className="break-all">{wallet.address}</span>
-      </p>
-      <p className="text-xs text-gray-600 mb-1">Chain: Sui (Tier 2 Support)</p>
-      <p className={`text-xs mb-2 ${
-        isWalletReady ? 'text-green-600' : 'text-orange-600'
-      }`}>
-        Status: {isWalletReady ? '✓ Ready for signing' : '⚠ Initializing...'}
-      </p>
-      <div className="flex justify-between">
-        <div className="flex flex-col">
-          <button
-            onClick={() => setShowSignMessage(true)}
-            className="wallet-button wallet-button-primary mb-3"
-            disabled={!isWalletReady}
-          >
-            <div className="btn-text">
-              {!isWalletReady ? 'Wallet Initializing...' : 'Sign message'}
+    <div className="w-full space-y-4">
+      <div className="w-full bg-gray-100 rounded-lg shadow-md p-6">
+        <div className="w-full">
+          <h3 className="text-lg font-bold mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            Sui Wallet {index + 1}
+          </h3>
+          
+          <div className="mb-4">
+            <div className="text-sm text-base-content/60 mb-2">Address:</div>
+            <div className="font-mono text-base bg-base-100 p-4 rounded-lg break-all w-full">
+              {wallet.address}
             </div>
-          </button>
-          <button
-            onClick={() => setShowSendTransaction(true)}
-            className="wallet-button wallet-button-secondary"
-            disabled={!isWalletReady || isTransactionPending}
-          >
-            <div className="btn-text">
-              {!isWalletReady ? 'Wallet Initializing...' : 
-               isTransactionPending ? 'Transaction Pending...' : 'Send Real Transaction'}
+          </div>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div className="badge badge-outline">Sui Testnet</div>
+            <div className={`badge ${
+              isWalletReady ? 'badge-success' : 'badge-warning'
+            }`}>
+              {isWalletReady ? '✓ Ready' : '⚠ Initializing'}
             </div>
-          </button>
+          </div>
+          
+          <div className="flex justify-center gap-2">
+            <button
+              onClick={() => setShowSignMessage(true)}
+              className="btn btn-primary btn-sm"
+              disabled={!isWalletReady}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              {!isWalletReady ? 'Initializing...' : 'Sign Message'}
+            </button>
+            
+            <button
+              onClick={() => setShowSendTransaction(true)}
+              className="btn btn-secondary btn-sm"
+              disabled={!isWalletReady || isTransactionPending}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              {!isWalletReady ? 'Initializing...' : 
+               isTransactionPending ? 'Pending...' : 'Send Transaction'}
+            </button>
+          </div>
         </div>
       </div>
       {showSignMessage && (
-        <div className="mt-4 p-2 border rounded shadow bg-white text-left">
-          <h2 className="text-lg font-semibold mb-2">Sign message confirmation</h2>
-          <p className="text-xs text-gray-600 mb-2">
-            Signing message with Privy Sui wallet: <span className="break-all">{wallet.address}</span>
-          </p>
-          <p className="text-xs text-gray-500 mb-2">
-            Using Privy's raw sign functionality for Sui Tier 2 support
-          </p>
-          
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Message to sign:
-            </label>
-            <textarea
-              value={messageToSign}
-              onChange={(e) => setMessageToSign(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded text-sm"
-              rows={3}
-              placeholder="Enter your message here..."
-            />
-          </div>
-          
-          {signedMessage && (
-            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded">
-              <h4 className="text-sm font-medium text-green-800 mb-1">✅ Message Signed Successfully!</h4>
-              <p className="text-xs text-gray-600 mb-1">
-                <strong>Message:</strong> {signedMessage.message}
-              </p>
-              <p className="text-xs text-gray-600 mb-1">
-                <strong>Signature:</strong> <span className="break-all">{signedMessage.signature}</span>
-              </p>
-              <p className="text-xs text-gray-600">
-                <strong>Address:</strong> <span className="break-all">{signedMessage.address}</span>
-              </p>
-            </div>
-          )}
-          
-          <div className="flex flex-col space-y-3">
-            <button
-              onClick={() => customSignMessage()}
-              className="wallet-button wallet-button-primary"
-              disabled={isMessagePending || !messageToSign.trim()}
-            >
-              <div className="btn-text">
-                {isMessagePending ? 'Signing...' : 'Sign message'}
+        <div className="w-full bg-white rounded-lg shadow-lg p-6">
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-4 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Sign Message
+            </h2>
+            
+            <div className="alert alert-info mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div>
+                <div className="text-sm mb-1">Wallet:</div>
+                <div className="font-mono text-sm bg-base-200 p-2 rounded break-all">{wallet.address}</div>
+                <div className="text-xs opacity-70 mt-2">Using Privy's Sui Tier 2 integration</div>
               </div>
-            </button>
-            <button
-              onClick={() => setShowSignMessage(false)}
-              className="wallet-button wallet-button-secondary"
-              disabled={isMessagePending}
-            >
-              <div className="btn-text">Cancel</div>
-            </button>
+            </div>
+            
+            <div className="form-control mb-4 w-full">
+              <label className="label">
+                <span className="label-text font-medium">Message to sign:</span>
+              </label>
+              <textarea
+                value={messageToSign}
+                onChange={(e) => setMessageToSign(e.target.value)}
+                className="textarea textarea-bordered h-24 w-full"
+                placeholder="Enter your message here..."
+              />
+            </div>
+            
+            {signedMessage && (
+              <div className="alert alert-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                  <h4 className="font-bold">Message Signed Successfully!</h4>
+                  <div className="text-sm mt-3 space-y-3">
+                    <div>
+                      <div className="font-semibold mb-1">Message:</div>
+                      <div className="bg-base-200 p-2 rounded">{signedMessage.message}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold mb-1">Signature:</div>
+                      <div className="font-mono text-xs bg-base-200 p-2 rounded break-all">{signedMessage.signature}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold mb-1">Address:</div>
+                      <div className="font-mono text-sm bg-base-200 p-2 rounded break-all">{signedMessage.address}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSignMessage(false)}
+                className="btn btn-ghost"
+                disabled={isMessagePending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => customSignMessage()}
+                className="btn btn-primary"
+                disabled={isMessagePending || !messageToSign.trim()}
+              >
+                {isMessagePending && <span className="loading loading-spinner loading-sm"></span>}
+                {isMessagePending ? 'Signing...' : 'Sign Message'}
+              </button>
+            </div>
           </div>
         </div>
       )}
       {showSendTransaction && (
-        <div className="mt-4 p-2 border rounded shadow bg-white text-left">
-          <h2 className="text-lg font-semibold mb-2">Send Sui Transaction</h2>
-          <p className="text-xs text-gray-600 mb-2">
-            From: <br />
-            <span className="break-all">{wallet.address}</span>
-          </p>
-          <p className="text-xs text-gray-600 mb-2">
-            To: <br />
-            <span className="break-all">{recipientAddress}</span>
-          </p>
-          <p className="text-xs text-gray-600 mb-2">Amount: 0.1 SUI</p>
-          <p className="text-xs text-gray-600 mb-2">Network: Sui Testnet</p>
-          <p className="text-xs text-gray-500 mb-2">
-            This will send a real transaction on the Sui testnet using Privy's Tier 2 integration
-          </p>
-          <div className="flex flex-col space-y-3">
-            <button
-              onClick={() => customSendTransaction()}
-              className="wallet-button wallet-button-primary"
-              disabled={isTransactionPending}
-            >
-              <div className="btn-text">
-                {isTransactionPending ? 'Sending...' : 'Send Transaction'}
+        <div className="w-full bg-white rounded-lg shadow-lg p-6">
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-4 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              Send Sui Transaction
+            </h2>
+            
+            <div className="alert alert-warning mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 w-6 h-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+              <div>
+                <div className="font-bold">Real Transaction Warning</div>
+                <div className="text-sm">This will send a real transaction on Sui Testnet using Privy's Tier 2 integration</div>
               </div>
-            </button>
-            <button
-              onClick={() => setShowSendTransaction(false)}
-              className="wallet-button wallet-button-secondary"
-              disabled={isTransactionPending}
-            >
-              <div className="btn-text">Cancel</div>
-            </button>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium">From:</span>
+                </label>
+                <div className="input input-bordered font-mono text-sm break-all bg-base-200 p-3 w-full">
+                  {wallet.address}
+                </div>
+              </div>
+              
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium">To:</span>
+                </label>
+                <div className="input input-bordered font-mono text-sm break-all bg-base-200 p-3 w-full">
+                  {recipientAddress}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Amount:</span>
+                  </label>
+                  <div className="input input-bordered bg-base-200">
+                    0.1 SUI
+                  </div>
+                </div>
+                
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Network:</span>
+                  </label>
+                  <div className="badge badge-outline badge-lg w-full">
+                    Sui Testnet
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSendTransaction(false)}
+                className="btn btn-ghost"
+                disabled={isTransactionPending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => customSendTransaction()}
+                className="btn btn-primary"
+                disabled={isTransactionPending}
+              >
+                {isTransactionPending && <span className="loading loading-spinner loading-sm"></span>}
+                {isTransactionPending ? 'Sending...' : 'Send Transaction'}
+              </button>
+            </div>
           </div>
         </div>
       )}
