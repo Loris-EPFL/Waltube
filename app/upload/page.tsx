@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Navbar from '../components/Navbar';
 
 interface VideoSegment {
   blob: Blob;
@@ -264,10 +265,11 @@ const VideoUploadPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-base-100">
+      <Navbar />
       <ToastContainer />
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-base-200 rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
             WALTUBE Video Upload & HLS Segmentation
           </h1>
@@ -369,7 +371,7 @@ const VideoUploadPage: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {segments.map((segment) => (
-                  <div key={segment.index} className="bg-white rounded-lg p-4 shadow">
+                  <div key={segment.index} className="bg-base-200 rounded-lg p-4 shadow">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium text-gray-800">
                         Segment {segment.index + 1}

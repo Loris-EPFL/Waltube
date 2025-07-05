@@ -19,6 +19,7 @@ export default function Wallets() {
   const {createGuestAccount} = useGuestAccounts();
   const [pendingAction, setPendingAction] = useState('');
   const [walletCreationError, setWalletCreationError] = useState('');
+  const [newlyCreatedWallets, setNewlyCreatedWallets] = useState<any[]>([]);
 
   const hasExistingSuiWallet = user?.linkedAccounts.some(
     (account): account is WalletWithMetadata =>
@@ -27,12 +28,25 @@ export default function Wallets() {
       account.chainType === 'sui',
   );
 
-  const suiWallets = user?.linkedAccounts.filter(
+  const existingSuiWallets = user?.linkedAccounts.filter(
     (account): account is WalletWithMetadata =>
       account.type === 'wallet' &&
       account.walletClientType === 'privy' &&
       account.chainType === 'sui',
   ) || [];
+  
+  // Merge existing wallets with newly created ones (which have public_key)
+  const suiWallets = [
+    ...existingSuiWallets.map(wallet => ({
+      ...wallet,
+      // Check if we have a newly created wallet with the same address
+      public_key: newlyCreatedWallets.find(newWallet => newWallet.address === wallet.address)?.public_key
+    })),
+    // Add any newly created wallets that aren't in linkedAccounts yet
+    ...newlyCreatedWallets.filter(newWallet => 
+      !existingSuiWallets.some(existing => existing.address === newWallet.address)
+    )
+  ];
 
   /**
    *
@@ -49,7 +63,24 @@ export default function Wallets() {
       const createSuiWalletWithErrorHandling = async () => {
         try {
           setWalletCreationError('');
-          await createSuiWallet({chainType: 'sui'});
+          const {user, wallet} = await createSuiWallet({chainType: 'sui'});
+
+          console.log('address', wallet.address);
+          console.log('wallet', wallet);
+          console.log('user', user);
+          
+          console.log('pubkey', wallet.public_key);
+          
+          // Store the newly created wallet with its public key
+          if (wallet.public_key) {
+            setNewlyCreatedWallets(prev => {
+              // Remove any existing wallet with the same address and add the new one
+              const filtered = prev.filter(w => w.address !== wallet.address);
+              return [...filtered, wallet];
+            });
+            console.log('✅ Stored wallet with public key for future use');
+          }
+          
           toast.success('Sui wallet created successfully!');
         } catch (error: any) {
           // Suppress the HD wallet error as it's expected for Sui
@@ -79,56 +110,64 @@ export default function Wallets() {
   }
 
   return (
-    <div className="mx-4 px-4">
+    <div className="bg-base-100 shadow-lg p-6 w-full max-w-none">
       <ToastContainer />
-      <h1 className="text-2xl font-bold text-center my-4">WALTUBE Sui Wallet</h1>
-      <div className="text-center mt-4 mx-auto mb-4">
-        <p className="status-text">
-          Create your Sui wallet for WALTUBE to interact with the decentralized video platform.
-          Your wallet will be used for transactions and content management on the Sui blockchain.
-        </p>
-        <div className="mb-2 mt-2 flex justify-center">
-          <a
-            href="https://docs.privy.io/recipes/use-tier-2"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link status-text"
-          >
-            Sui Tier 2 Integration Guide
-          </a>
-        </div>
-        {walletCreationError && (
-          <div className="text-red-500 text-sm mt-2">
-            Error: {walletCreationError}
-          </div>
-        )}
-      </div>
-      <div className="flex justify-center">
-        <button
-          onClick={() => createWallet('Sui')}
-          className={`btn ${hasExistingSuiWallet ? 'btn-disabled' : ''}`}
-          disabled={hasExistingSuiWallet}
-        >
-          <div
-            className={`${hasExistingSuiWallet ? 'btn-text-disabled' : 'text-black'} btn-text`}
-          >
-            {hasExistingSuiWallet ? 'Sui Wallet Created' : 'Create Sui Wallet'}
-          </div>
-        </button>
-      </div>
-      <div className="mt-4">
-        {suiWallets.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold mb-2 text-center">Your Sui Wallet</h2>
-            <div className="flex justify-center">
-              {suiWallets.map((wallet, index) => (
-                <div key={wallet.address} className="max-w-md">
-                  <SuiWallet wallet={wallet} index={index} />
-                </div>
-              ))}
+      <div className="w-full max-w-none">
+        <h1 className="flex text-2xl justify-center mb-4">WALTUBE Sui Wallet</h1>
+        
+        <div className="text-center mb-6">
+          <p className="text-base-content/70 mb-4">
+            Create your Sui wallet for WALTUBE to interact with the decentralized video platform.
+            Your wallet will be used for transactions and content management on the Sui blockchain.
+          </p>
+          
+          
+          
+          {walletCreationError && (
+            <div className="alert alert-error shadow-lg mb-4">
+              <div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Error: {walletCreationError}</span>
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+        
+        <div className="card-actions justify-center mb-6">
+          <button
+            onClick={() => createWallet('Sui')}
+            className={`btn ${hasExistingSuiWallet ? 'btn-success' : 'btn-primary'}`}
+            disabled={hasExistingSuiWallet}
+          >
+            {hasExistingSuiWallet ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Sui Wallet Created
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create Sui Wallet
+              </>
+            )}
+          </button>
+        </div>
+        
+        {suiWallets.length > 0 && (
+          <div className="divider">Your Wallet</div>
         )}
+        
+        <div className="w-full max-w-none">
+          {suiWallets.map((wallet, index) => (
+            <div key={wallet.address} className="w-full max-w-none mb-4">
+              <SuiWallet wallet={wallet} index={index} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

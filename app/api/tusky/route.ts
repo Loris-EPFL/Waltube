@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
         return await handleConnect();
       case 'upload':
         return await handleUpload(request);
+      case 'uploadmp4':
+        return await handleUploadMP4(request);
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -43,12 +45,20 @@ export async function GET(request: NextRequest) {
     switch (action) {
       case 'videos':
         return await handleGetVideos();
+      case 'mp4videos':
+        return await handleGetMP4Videos();
       case 'download':
         const fileId = url.searchParams.get('fileId');
         if (!fileId) {
           return NextResponse.json({ error: 'File ID required' }, { status: 400 });
         }
         return await handleDownload(fileId);
+      case 'stream':
+        const streamFileId = url.searchParams.get('fileId');
+        if (!streamFileId) {
+          return NextResponse.json({ error: 'File ID is required' }, { status: 400 });
+        }
+        return await handleStream(streamFileId);
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -170,5 +180,146 @@ async function handleDownload(fileId: string) {
     });
   } catch (error: any) {
     throw new Error(`Download failed: ${error.message}`);
+  }
+}
+
+async function handleStream(fileId: string) {
+  try {
+    const tusky = await getTuskyInstance();
+    const stream = await tusky.file.stream(fileId);
+    
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Cache-Control': 'no-cache'
+      }
+    });
+  } catch (error: any) {
+    throw new Error(`Stream failed: ${error.message}`);
+  }
+}
+
+async function handleUploadMP4(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const videoName = formData.get('videoName') as string;
+    const qualities = JSON.parse(formData.get('qualities') as string || '[]');
+    const thumbnail = formData.get('thumbnail') as File | null;
+    
+    if (!videoName || qualities.length === 0) {
+      throw new Error('Video name and at least one quality are required');
+    }
+    
+    const tusky = await getTuskyInstance();
+    
+    // Create vault for this MP4 video
+    const vaultName = `WALTUBE_MP4_${videoName}`;
+    const { id: vaultId } = await tusky.vault.create(vaultName, { encrypted: false });
+    
+    const uploadedFiles: any = {
+      qualities: {},
+      thumbnail: null
+    };
+    
+    // Upload thumbnail if provided
+    if (thumbnail) {
+      const thumbnailUploadId = await tusky.file.upload(vaultId, thumbnail, {
+        name: 'thumbnail.png',
+        mimeType: 'image/png'
+      });
+      uploadedFiles.thumbnail = {
+        fileId: thumbnailUploadId,
+        fileName: 'thumbnail.png',
+        fileSize: thumbnail.size
+      };
+    }
+    
+    // Upload video files for each quality
+    for (const quality of qualities) {
+      const videoFile = formData.get(`video_${quality}`) as File;
+      if (videoFile) {
+        const videoUploadId = await tusky.file.upload(vaultId, videoFile, {
+          name: `${videoName}_${quality}.mp4`,
+          mimeType: 'video/mp4'
+        });
+        
+        uploadedFiles.qualities[quality] = {
+          fileId: videoUploadId,
+          fileName: `${videoName}_${quality}.mp4`,
+          fileSize: videoFile.size
+        };
+      }
+    }
+    
+    return NextResponse.json({
+      success: true,
+      vaultId,
+      vaultName: videoName,
+      uploadedFiles,
+      qualityCount: qualities.length
+    });
+  } catch (error: any) {
+    throw new Error(`MP4 upload failed: ${error.message}`);
+  }
+}
+
+async function handleGetMP4Videos() {
+  try {
+    const tusky = await getTuskyInstance();
+    const vaults = await tusky.vault.listAll();
+    const mp4Vaults = vaults.filter((vault: any) => 
+      vault.name.startsWith('WALTUBE_MP4_')
+    );
+    
+    const stored: any[] = [];
+    for (const vault of mp4Vaults) {
+      try {
+        const files = await tusky.file.listAll({ vaultId: vault.id });
+        
+        // Find thumbnail
+        const thumbnailFile = files.find((f: any) => f.name === 'thumbnail.png');
+        
+        // Find video files by quality
+        const videoFiles = files.filter((f: any) => f.name.endsWith('.mp4'));
+        const qualities: any = {};
+        let totalSize = 0;
+        
+        for (const videoFile of videoFiles) {
+          // Extract quality from filename (e.g., "video_720p.mp4")
+          const qualityMatch = videoFile.name.match(/_([0-9]+p)\.mp4$/);
+          if (qualityMatch) {
+            const quality = qualityMatch[1];
+            qualities[quality] = {
+              fileId: videoFile.id,
+              fileName: videoFile.name,
+              fileSize: videoFile.size || 0
+            };
+            totalSize += videoFile.size || 0;
+          }
+        }
+        
+        if (Object.keys(qualities).length > 0) {
+          stored.push({
+            vaultId: vault.id,
+            vaultName: vault.name.replace('WALTUBE_MP4_', ''),
+            qualities,
+            thumbnail: thumbnailFile ? {
+              fileId: thumbnailFile.id,
+              fileName: thumbnailFile.name,
+              fileSize: thumbnailFile.size || 0
+            } : null,
+            totalSize,
+            qualityCount: Object.keys(qualities).length,
+            createdAt: vault.createdAt || new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.warn(`Failed to load MP4 vault ${vault.id}:`, error);
+      }
+    }
+    
+    return NextResponse.json(stored);
+  } catch (error: any) {
+    throw new Error(`Failed to get MP4 videos: ${error.message}`);
   }
 }

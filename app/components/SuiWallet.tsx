@@ -5,15 +5,20 @@ import {
   messageWithIntent, 
   toSerializedSignature, 
 } from "@mysten/sui/cryptography";
+
 import { Ed25519PublicKey } from '@mysten/sui/keypairs/ed25519';
-import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
+import { verifyPersonalMessageSignature, verifyTransactionSignature } from '@mysten/sui/verify';
 import { blake2b } from "@noble/hashes/blake2b";
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { toast } from 'react-toastify';
 
 interface SuiWalletProps {
-  wallet: any; // Sui wallet type from Privy
+  wallet: {
+    address: string;
+    public_key: string; // Added to support direct access to public key
+    [key: string]: any; // Allow other properties from Privy wallet
+  };
   index: number;
 }
 
@@ -21,11 +26,14 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
   const [showSignMessage, setShowSignMessage] = useState(false);
   const [showSendTransaction, setShowSendTransaction] = useState(false);
   const [isTransactionPending, setIsTransactionPending] = useState(false);
-  
-  // Recipient address for display
-  const recipientAddress = '0x46648fb254d9d49c1ee17bd12ac55db6691595a3c38b83234d5907126074382f';
+  const [isMessagePending, setIsMessagePending] = useState(false);
+  const [messageToSign, setMessageToSign] = useState('Hello from WALTUBE Sui wallet!');
+  const [signedMessage, setSignedMessage] = useState<{message: string, signature: string, address: string} | null>(null);
+  const [recipientAddress, setRecipientAddress] = useState('0x46648fb254d9d49c1ee17bd12ac55db6691595a3c38b83234d5907126074382f');
+  const [amountInSui, setAmountInSui] = useState('0.1');
   const { ready, authenticated, user } = usePrivy();
   const { signRawHash } = useSignRawHash();
+
 
   // Initialize Sui client for testnet
   const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
@@ -55,79 +63,109 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
       }
 
       // Check if signRawHash is available
-       if (!signRawHash) {
-         toast.error('Signing functionality not available. Please try refreshing the page.');
-         return;
-       }
+      if (!signRawHash) {
+        toast.error('Signing functionality not available. Please try refreshing the page.');
+        return;
+      }
 
-       // Debug wallet information
-       console.log('Wallet object:', wallet);
-       console.log('User authenticated:', authenticated);
-       console.log('Privy ready:', ready);
+      // Check if we have the public key
+      if (!wallet.public_key) {
+        toast.error('Public key not available. Please create a new Sui wallet to enable message signing.');
+        return;
+      }
 
-       // Create a simple message to sign
-      const message = 'Hello from WALTUBE Sui wallet!';
-      const messageBytes = new TextEncoder().encode(message);
-      const messageHash = blake2b(messageBytes, { dkLen: 32 });
-      const hashToSign = '0x' + toHex(messageHash);
-
-      // Sign the hash using Privy's raw sign functionality
+      setIsMessagePending(true);
+      
+      // Prepare the message for signing
+      const messageBytes = new TextEncoder().encode(messageToSign);
+      
+      // For personal messages, we need to create the intent message for signing
+      // but the verification function expects the original message bytes
+      const intentMessage = messageWithIntent("PersonalMessage", messageBytes);
+      const digest = blake2b(intentMessage, { dkLen: 32 });
+      
+      // Convert the digest to a hex string for signing
+      const hashToSign = '0x' + toHex(digest);
+      
+      console.log('Hash to sign:', hashToSign);
+      
+      toast.info('Signing message with Privy...');
+      
+      // Sign the hash using Privy's signRawHash
       const signResult = await signRawHash({
         address: wallet.address,
         chainType: 'sui',
         hash: hashToSign as `0x${string}`
       });
       
-      console.log('Message sign result:', signResult);
-      const signature = signResult.signature;
+      const rawSignature = signResult.signature;
+      console.log('Raw signature from Privy:', rawSignature);
       
-      // 🎉 NEW SOLUTION: Recover the public key from the signature!
-      // This solves the Privy public key issue using Sui SDK's verifyPersonalMessageSignature
-      try {
-        console.log('Recovering public key from signature using Sui SDK...');
-        
-        // Convert signature to the format expected by verifyPersonalMessageSignature
-        const signatureBytes = new Uint8Array(Buffer.from(signature.replace('0x', ''), 'hex'));
-        
-        // Create the serialized signature for verification
-        // We need to create a temporary Ed25519PublicKey for the signature format
-        // But we'll recover the actual public key from the verification
-        const tempPublicKey = new Ed25519PublicKey(new Uint8Array(32)); // Temporary placeholder
-        const tempSerializedSig = toSerializedSignature({
-          signature: signatureBytes,
-          signatureScheme: "ED25519",
-          publicKey: tempPublicKey,
-        });
-        
-        // Use verifyPersonalMessageSignature to recover the actual public key
-        const recoveredPublicKey = await verifyPersonalMessageSignature(messageBytes, tempSerializedSig);
-        
-        console.log('✅ Successfully recovered public key:', recoveredPublicKey.toBase64());
-        console.log('✅ Recovered address:', recoveredPublicKey.toSuiAddress());
-        console.log('✅ Original wallet address:', wallet.address);
-        
-        // Verify the recovered address matches the wallet address
-        if (recoveredPublicKey.toSuiAddress() === wallet.address) {
-          toast.success(`Message signed successfully! Public key recovered: ${recoveredPublicKey.toBase64().slice(0, 20)}...`);
-        } else {
-          toast.warning('Signature valid but address mismatch - this may indicate a different signing scheme');
-        }
-        
-      } catch (recoveryError: any) {
-        console.error('Public key recovery failed:', recoveryError);
-        toast.success(`Message signed successfully! Signature: ${signature.slice(0, 20)}... (Note: Public key recovery failed - ${recoveryError.message})`);
+      // Parse the public key
+      let keyBytes = wallet.public_key.startsWith('0x') 
+        ? new Uint8Array(Buffer.from(wallet.public_key.slice(2), 'hex'))
+        : new Uint8Array(Buffer.from(wallet.public_key, 'hex'));
+      
+      // Ed25519 public keys should be exactly 32 bytes
+      if (keyBytes.length === 33) {
+        keyBytes = keyBytes.slice(1); // Remove the first byte if it's a prefix
       }
+      
+      const publicKey = new Ed25519PublicKey(keyBytes);
+      
+      // Verify the public key matches the wallet address by deriving address manually
+      // Sui address = BLAKE2b(signature_scheme_flag || public_key_bytes)
+      const ED25519_FLAG = 0x00; // Ed25519 signature scheme flag
+      const addressBytes = new Uint8Array(1 + keyBytes.length);
+      addressBytes[0] = ED25519_FLAG;
+      addressBytes.set(keyBytes, 1);
+      
+      const addressHash = blake2b(addressBytes, { dkLen: 32 });
+      const derivedAddress = '0x' + toHex(addressHash);
+      
+      console.log('Derived address from public key:', derivedAddress);
+      console.log('Wallet address:', wallet.address);
+      
+      if (derivedAddress !== wallet.address) {
+        throw new Error(`Public key validation failed: derived address ${derivedAddress} does not match wallet address ${wallet.address}`);
+      }
+      
+      console.log('✅ Public key validation successful!');
+      
+      // Convert raw signature to bytes (remove 0x prefix if present)
+      const rawSigBytes = new Uint8Array(Buffer.from(rawSignature.replace('0x', ''), 'hex'));
+      
+      // Create the serialized signature for verification
+      const messageSignature = toSerializedSignature({
+        signature: rawSigBytes,
+        signatureScheme: "ED25519",
+        publicKey,
+      });
+      
+      // Since we signed the intent-wrapped message hash directly, we need to verify it differently
+      // We'll verify the signature against the same hash we signed
+      const isValid = publicKey.verify(digest, rawSigBytes);
+      console.log('Signature verification result:', isValid);
+      
+      if (!isValid) {
+        throw new Error('Signature verification failed');
+      }
+      
+      console.log('✅ Signature verification successful!');
+      
+      setSignedMessage({
+        message: messageToSign,
+        signature: messageSignature,
+        address: wallet.address
+      });
+      
+      toast.success('Message signed successfully!');
+      
     } catch (error: any) {
-      console.error('Sign message error:', error);
-      
-      // Handle specific Privy wallet proxy errors
-      if (error?.message?.includes('Wallet proxy not initialized')) {
-        toast.error('Wallet not ready for signing. Please try logging out and back in, or refresh the page.');
-      } else if (error?.message?.includes('User rejected')) {
-        toast.info('Message signing cancelled by user');
-      } else {
-        toast.error(`Failed to sign message: ${error?.message}`);
-      }
+      console.error('Error signing message:', error);
+      toast.error(`Failed to sign message: ${error.message}`);
+    } finally {
+      setIsMessagePending(false);
     }
   };
 
@@ -140,48 +178,43 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
       }
 
       // Verify wallet is properly initialized
-       if (!wallet || !wallet.address) {
-         toast.error('Wallet not properly initialized');
-         return;
-       }
+      if (!wallet || !wallet.address) {
+        toast.error('Wallet not properly initialized');
+        return;
+      }
 
-       // Check if signRawHash is available
-        if (!signRawHash) {
-          toast.error('Signing functionality not available. Please try refreshing the page.');
-          return;
-        }
+      // Check if signRawHash is available
+      if (!signRawHash) {
+        toast.error('Signing functionality not available. Please try refreshing the page.');
+        return;
+      }
 
-        // Debug wallet information
-        console.log('Transaction - Wallet object:', wallet);
-        console.log('Transaction - User authenticated:', authenticated);
-        console.log('Transaction - Privy ready:', ready);
-        console.log('Transaction - User object:', user);
-  
-        setIsTransactionPending(true);
+      // Check if we have the public key
+      if (!wallet.public_key) {
+        toast.error('Public key not available. Please create a new Sui wallet to enable transactions.');
+        return;
+      }
+
+      setIsTransactionPending(true);
       
       // Build a real Sui transaction
-      const transaction = new Transaction();
+      const tx = new Transaction();
       
       // Set the sender
-      transaction.setSender(wallet.address);
+      tx.setSender(wallet.address);
       
-      // Add a simple transfer transaction (sending 0.1 SUI to a test address)
-      const amount = 100000000; // 0.1 SUI in MIST (1 SUI = 1,000,000,000 MIST)
+      // Add a simple transfer transaction
+      const amount = Math.floor(parseFloat(amountInSui) * 1000000000); // Convert SUI to MIST (1 SUI = 1,000,000,000 MIST)
       
       // Split coins to create the exact amount needed
-      const [coin] = transaction.splitCoins(transaction.gas, [amount]);
+      const [coin] = tx.splitCoins(tx.gas, [amount]);
       
       // Transfer the coin to the recipient
-      transaction.transferObjects([coin], recipientAddress);
-      
-      // Build the transaction to get the transaction bytes
-      const transactionBytes = await transaction.build({ client: suiClient });
-      
-      console.log('Transaction built, preparing for Privy signing...');
-      
-      // Follow Privy's Sui documentation approach
-      // Create the intent message and digest for signing
-      const intentMessage = messageWithIntent("TransactionData", transactionBytes);
+      tx.transferObjects([coin], recipientAddress);
+
+      // After you've added the data to your transaction
+      const txBytes = await tx.build({ client: suiClient });
+      const intentMessage = messageWithIntent("TransactionData", txBytes);
       const digest = blake2b(intentMessage, { dkLen: 32 });
       
       // Convert the digest to a hex string for signing
@@ -191,73 +224,70 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
       
       toast.info('Signing transaction with Privy...');
       
-      // Sign the hash using Privy's signRawHash
+      // Obtain the raw signature from Privy's raw_sign endpoint
       const signResult = await signRawHash({
         address: wallet.address,
         chainType: 'sui',
         hash: hashToSign as `0x${string}`
       });
       
-      console.log('Sign result:', signResult);
-      
-      // Get the raw signature from Privy
       const rawSignature = signResult.signature;
-      
       console.log('Raw signature from Privy:', rawSignature);
       
-      // 🎉 NEW SOLUTION: Recover the public key from the signature!
-      // This completely eliminates the need for backend API calls or public key exposure
-      let serializedSignature: string;
+      // Parse the public key
+      let keyBytes = wallet.public_key.startsWith('0x') 
+        ? new Uint8Array(Buffer.from(wallet.public_key.slice(2), 'hex'))
+        : new Uint8Array(Buffer.from(wallet.public_key, 'hex'));
       
-      try {
-        console.log('🚀 Recovering public key from transaction signature using Sui SDK...');
-        
-        // Convert signature to the format expected by verifyPersonalMessageSignature
-        const signatureBytes = new Uint8Array(Buffer.from(rawSignature.replace('0x', ''), 'hex'));
-        
-        // Create a temporary serialized signature for verification
-        // We use a placeholder public key initially
-        const tempPublicKey = new Ed25519PublicKey(new Uint8Array(32));
-        const tempSerializedSig = toSerializedSignature({
-          signature: signatureBytes,
-          signatureScheme: "ED25519",
-          publicKey: tempPublicKey,
-        });
-        
-        // Use verifyPersonalMessageSignature to recover the actual public key
-        // We need to verify against the original intent message that was signed
-        const recoveredPublicKey = await verifyPersonalMessageSignature(intentMessage, tempSerializedSig);
-        
-        console.log('✅ Successfully recovered public key from transaction signature!');
-        console.log('✅ Recovered public key:', recoveredPublicKey.toBase64());
-        console.log('✅ Recovered address:', recoveredPublicKey.toSuiAddress());
-        console.log('✅ Original wallet address:', wallet.address);
-        
-        // Verify the recovered address matches the wallet address
-        if (recoveredPublicKey.toSuiAddress() !== wallet.address) {
-          throw new Error(`Address mismatch: recovered ${recoveredPublicKey.toSuiAddress()} vs wallet ${wallet.address}`);
-        }
-        
-        // Create the final serialized signature with the recovered public key
-        serializedSignature = toSerializedSignature({
-          signature: signatureBytes,
-          signatureScheme: "ED25519",
-          publicKey: recoveredPublicKey,
-        });
-        
-        console.log('✅ Created final serialized signature with recovered public key');
-        
-      } catch (recoveryError: any) {
-        console.error('❌ Public key recovery failed:', recoveryError);
-        throw new Error(`Failed to recover public key from signature: ${recoveryError.message}. This indicates the signature verification process failed.`);
+      // Ed25519 public keys should be exactly 32 bytes
+      if (keyBytes.length === 33) {
+        keyBytes = keyBytes.slice(1); // Remove the first byte if it's a prefix
+      }
+      
+      const publicKey = new Ed25519PublicKey(keyBytes);
+      
+      // Verify the public key matches the wallet address by deriving address manually
+      // Sui address = BLAKE2b(signature_scheme_flag || public_key_bytes)
+      const ED25519_FLAG = 0x00; // Ed25519 signature scheme flag
+      const addressBytes = new Uint8Array(1 + keyBytes.length);
+      addressBytes[0] = ED25519_FLAG;
+      addressBytes.set(keyBytes, 1);
+      
+      const addressHash = blake2b(addressBytes, { dkLen: 32 });
+      const derivedAddress = '0x' + toHex(addressHash);
+      
+      console.log('Derived address from public key:', derivedAddress);
+      console.log('Wallet address:', wallet.address);
+      
+      if (derivedAddress !== wallet.address) {
+        throw new Error(`Public key validation failed: derived address ${derivedAddress} does not match wallet address ${wallet.address}`);
+      }
+      
+      console.log('✅ Public key validation successful!');
+      
+      // Convert raw signature to bytes (remove 0x prefix if present)
+      const rawSigBytes = new Uint8Array(Buffer.from(rawSignature.replace('0x', ''), 'hex'));
+      
+      // Create and verify the transaction signature
+      const txSignature = toSerializedSignature({
+        signature: rawSigBytes,
+        signatureScheme: "ED25519",
+        publicKey,
+      });
+      
+      const signer = await verifyTransactionSignature(txBytes, txSignature);
+      console.log('Signature verification:', signer.toSuiAddress() === wallet.address);
+      
+      if (signer.toSuiAddress() !== wallet.address) {
+        throw new Error('Signature verification failed');
       }
       
       toast.info('Submitting transaction to Sui network...');
       
       // Execute the transaction on the Sui network
       const result = await suiClient.executeTransactionBlock({
-        transactionBlock: transactionBytes,
-        signature: serializedSignature,
+        transactionBlock: txBytes,
+        signature: txSignature,
         options: {
           showEffects: true,
           showObjectChanges: true,
@@ -288,98 +318,217 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
    };
 
   return (
-    <div className="wallet-container">
-      <h3 className="wallet-header">Sui wallet {index + 1}</h3>
-      <p className="wallet-address">
-        <span className="break-all">{wallet.address}</span>
-      </p>
-      <p className="text-xs text-gray-600 mb-1">Chain: Sui (Tier 2 Support)</p>
-      <p className={`text-xs mb-2 ${
-        isWalletReady ? 'text-green-600' : 'text-orange-600'
-      }`}>
-        Status: {isWalletReady ? '✓ Ready for signing' : '⚠ Initializing...'}
-      </p>
-      <div className="flex justify-between">
-        <div className="flex flex-col">
-          <button
-            onClick={() => setShowSignMessage(true)}
-            className="wallet-button wallet-button-primary mb-3"
-            disabled={!isWalletReady}
-          >
-            <div className="btn-text">
-              {!isWalletReady ? 'Wallet Initializing...' : 'Sign message'}
+    <div className="w-full space-y-4">
+      <div className="w-full bg-base-200 rounded-lg shadow-md p-6">
+        <div className="w-full">
+          <h3 className="text-lg font-bold mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            Sui Wallet {index + 1}
+          </h3>
+          
+          <div className="mb-4">
+            <div className="text-sm text-base-content/60 mb-2">Address:</div>
+            <div className="font-mono text-base bg-base-100 p-4 rounded-lg break-all w-full">
+              {wallet.address}
             </div>
-          </button>
-          <button
-            onClick={() => setShowSendTransaction(true)}
-            className="wallet-button wallet-button-secondary"
-            disabled={!isWalletReady || isTransactionPending}
-          >
-            <div className="btn-text">
-              {!isWalletReady ? 'Wallet Initializing...' : 
-               isTransactionPending ? 'Transaction Pending...' : 'Send Real Transaction'}
+          </div>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div className="badge badge-outline">Sui Testnet</div>
+            <div className={`badge ${
+              isWalletReady ? 'badge-success' : 'badge-warning'
+            }`}>
+              {isWalletReady ? '✓ Ready' : '⚠ Initializing'}
             </div>
-          </button>
+          </div>
+          
+          <div className="flex justify-center gap-2">
+            <button
+              onClick={() => setShowSignMessage(true)}
+              className="btn btn-primary btn-sm"
+              disabled={!isWalletReady}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              {!isWalletReady ? 'Initializing...' : 'Sign Message'}
+            </button>
+            
+            <button
+              onClick={() => setShowSendTransaction(true)}
+              className="btn btn-secondary btn-sm"
+              disabled={!isWalletReady || isTransactionPending}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              {!isWalletReady ? 'Initializing...' : 
+               isTransactionPending ? 'Pending...' : 'Send Transaction'}
+            </button>
+          </div>
         </div>
       </div>
       {showSignMessage && (
-        <div className="mt-4 p-2 border rounded shadow bg-white text-left">
-          <h2 className="text-lg font-semibold mb-2">Sign message confirmation</h2>
-          <p className="text-xs text-gray-600 mb-2">
-            Signing message with Privy Sui wallet: <span className="break-all">{wallet.address}</span>
-          </p>
-          <p className="text-xs text-gray-500 mb-2">
-            Using Privy's raw sign functionality for Sui Tier 2 support
-          </p>
-          <div className="flex flex-col space-y-3">
-            <button
-              onClick={() => customSignMessage()}
-              className="wallet-button wallet-button-primary"
-            >
-              <div className="btn-text">Sign message</div>
-            </button>
-            <button
-              onClick={() => setShowSignMessage(false)}
-              className="wallet-button wallet-button-secondary"
-            >
-              <div className="btn-text">Cancel</div>
-            </button>
+        <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-4 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Sign Message
+            </h2>
+            
+            <div className="alert alert-info mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div>
+                <div className="text-sm mb-1">Wallet:</div>
+                <div className="font-mono text-sm bg-base-200 text-base-content p-2 rounded break-all">{wallet.address}</div>
+                <div className="text-xs opacity-70 mt-2">Using Privy's Sui Tier 2 integration</div>
+              </div>
+            </div>
+            
+            <div className="form-control mb-4 w-full">
+              <label className="label">
+                <span className="label-text font-medium">Message to sign:</span>
+              </label>
+              <textarea
+                value={messageToSign}
+                onChange={(e) => setMessageToSign(e.target.value)}
+                className="textarea textarea-bordered h-24 w-full"
+                placeholder="Enter your message here..."
+              />
+            </div>
+            
+            {signedMessage && (
+              <div className="alert alert-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                  <h4 className="font-bold">Message Signed Successfully!</h4>
+                  <div className="text-sm mt-3 space-y-3">
+                    <div>
+                      <div className="font-semibold mb-1">Message:</div>
+                      <div className="bg-base-200 p-2 rounded">{signedMessage.message}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold mb-1">Signature:</div>
+                      <div className="font-mono text-xs bg-base-200 p-2 rounded break-all">{signedMessage.signature}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold mb-1">Address:</div>
+                      <div className="font-mono text-sm bg-base-200 p-2 rounded break-all">{signedMessage.address}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSignMessage(false)}
+                className="btn btn-ghost"
+                disabled={isMessagePending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => customSignMessage()}
+                className="btn btn-primary"
+                disabled={isMessagePending || !messageToSign.trim()}
+              >
+                {isMessagePending && <span className="loading loading-spinner loading-sm"></span>}
+                {isMessagePending ? 'Signing...' : 'Sign Message'}
+              </button>
+            </div>
           </div>
         </div>
       )}
       {showSendTransaction && (
-        <div className="mt-4 p-2 border rounded shadow bg-white text-left">
-          <h2 className="text-lg font-semibold mb-2">Send Sui Transaction</h2>
-          <p className="text-xs text-gray-600 mb-2">
-            From: <br />
-            <span className="break-all">{wallet.address}</span>
-          </p>
-          <p className="text-xs text-gray-600 mb-2">
-            To: <br />
-            <span className="break-all">{recipientAddress}</span>
-          </p>
-          <p className="text-xs text-gray-600 mb-2">Amount: 0.1 SUI</p>
-          <p className="text-xs text-gray-600 mb-2">Network: Sui Testnet</p>
-          <p className="text-xs text-gray-500 mb-2">
-            This will send a real transaction on the Sui testnet using Privy's Tier 2 integration
-          </p>
-          <div className="flex flex-col space-y-3">
-            <button
-              onClick={() => customSendTransaction()}
-              className="wallet-button wallet-button-primary"
-              disabled={isTransactionPending}
-            >
-              <div className="btn-text">
-                {isTransactionPending ? 'Sending...' : 'Send Transaction'}
+        <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
+          <div className="w-full">
+            <h2 className="text-lg font-bold mb-4 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              Send Sui Transaction
+            </h2>
+            
+            <div className="alert alert-warning mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 w-6 h-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+              <div>
+                <div className="font-bold">Real Transaction Warning</div>
+                <div className="text-sm">This will send a real transaction on Sui Testnet using Privy's Tier 2 integration</div>
               </div>
-            </button>
-            <button
-              onClick={() => setShowSendTransaction(false)}
-              className="wallet-button wallet-button-secondary"
-              disabled={isTransactionPending}
-            >
-              <div className="btn-text">Cancel</div>
-            </button>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium">From:</span>
+                </label>
+                <div className="input input-bordered font-mono text-sm break-all bg-base-200 p-3 w-full">
+                  {wallet.address}
+                </div>
+              </div>
+              
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium">To:</span>
+                </label>
+                <input
+                  type="text"
+                  value={recipientAddress}
+                  onChange={(e) => setRecipientAddress(e.target.value)}
+                  className="input input-bordered font-mono text-sm w-full"
+                  placeholder="Enter recipient address"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Amount (SUI):</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={amountInSui}
+                    onChange={(e) => setAmountInSui(e.target.value)}
+                    className="input input-bordered"
+                    placeholder="0.1"
+                  />
+                </div>
+                
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Network:</span>
+                  </label>
+                  <div className="badge badge-outline badge-lg w-full">
+                    Sui Testnet
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSendTransaction(false)}
+                className="btn btn-ghost"
+                disabled={isTransactionPending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => customSendTransaction()}
+                className="btn btn-primary"
+                disabled={isTransactionPending}
+              >
+                {isTransactionPending && <span className="loading loading-spinner loading-sm"></span>}
+                {isTransactionPending ? 'Sending...' : 'Send Transaction'}
+              </button>
+            </div>
           </div>
         </div>
       )}

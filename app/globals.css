@@ -2,26 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom button styles */
-.btn {
-  @apply h-10 px-4 py-2 bg-white rounded-[12px] border border-[#e2e3f0] inline-flex justify-center items-center gap-2 hover:bg-blue-50 whitespace-nowrap;
-}
-
-.btn-disabled {
-  @apply bg-white cursor-not-allowed text-sm font-medium leading-snug;
-}
-
-.btn-text {
-  @apply text-sm font-medium leading-snug;
-}
-
-.btn-text-primary {
-  @apply text-blue-500 text-sm font-medium leading-snug;
-}
-
-.btn-text-disabled {
-  @apply text-[#cbcde1];
-}
+/* Custom styles for wallet components */
 
 .container {
   @apply flex flex-col justify-center items-center min-h-screen bg-gray-100;
@@ -36,7 +17,7 @@
 }
 
 .status-text {
-  @apply text-sm text-gray-600;
+  @apply text-sm text-base-content opacity-70;
 }
 
 .link {
@@ -53,11 +34,11 @@
 }
 
 .wallet-address {
-  @apply text-xs text-gray-500 break-words mb-2;
+  @apply text-xs text-base-content opacity-60 break-words mb-2;
 }
 
 .wallet-chainId {
-  @apply text-xs text-gray-500 break-words mb-2;
+  @apply text-xs text-base-content opacity-60 break-words mb-2;
 }
 
 .wallet-button {
@@ -69,5 +50,5 @@
 }
 
 .wallet-button-secondary {
-  @apply bg-[#ffffff] border border-[#e2e3f0] text-black;
+  @apply bg-base-200 border border-base-300 text-base-content;
 }

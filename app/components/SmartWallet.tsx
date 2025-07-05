@@ -11,6 +11,7 @@ interface SmartWalletProps {
 const SmartWallet: React.FC<SmartWalletProps> = ({wallet, signer}) => {
   const [showSignMessage, setShowSignMessage] = useState(false);
   const [showSendTransaction, setShowSendTransaction] = useState(false);
+  const [recipientAddress, setRecipientAddress] = useState('0xF2A919977c6dE88dd8ed90feAADFcC5d65D66038');
   const {client} = useSmartWallets();
 
   if (!client) {
@@ -34,7 +35,7 @@ const SmartWallet: React.FC<SmartWalletProps> = ({wallet, signer}) => {
     try {
       const txHash = await client.sendTransaction({
         chain: baseSepolia,
-        to: '0xF2A919977c6dE88dd8ed90feAADFcC5d65D66038',
+        to: recipientAddress,
         value: BigInt(0),
       });
       toast.success(`Transaction sent successfully! ${txHash}`);
@@ -94,10 +95,16 @@ const SmartWallet: React.FC<SmartWalletProps> = ({wallet, signer}) => {
             From: <br />
             <span className="break-all">{wallet.address}</span>
           </p>
-          <p className="text-xs text-gray-600 mb-2">
-            To: <br />
-            <span className="break-all">0xF2A919977c6dE88dd8ed90feAADFcC5d65D66038</span>
-          </p>
+          <div className="mb-3">
+            <label className="block text-xs text-gray-600 mb-1">To:</label>
+            <input
+              type="text"
+              value={recipientAddress}
+              onChange={(e) => setRecipientAddress(e.target.value)}
+              className="w-full px-2 py-1 text-xs border rounded focus:outline-none focus:border-blue-500"
+              placeholder="Enter recipient address"
+            />
+          </div>
           <p className="text-xs text-gray-600 mb-2">Value: 10000</p>
           <div className="flex flex-col space-y-3">
             <button
