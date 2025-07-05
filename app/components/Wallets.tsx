@@ -19,6 +19,7 @@ export default function Wallets() {
   const {createGuestAccount} = useGuestAccounts();
   const [pendingAction, setPendingAction] = useState('');
   const [walletCreationError, setWalletCreationError] = useState('');
+  const [newlyCreatedWallets, setNewlyCreatedWallets] = useState<any[]>([]);
 
   const hasExistingSuiWallet = user?.linkedAccounts.some(
     (account): account is WalletWithMetadata =>
@@ -27,12 +28,25 @@ export default function Wallets() {
       account.chainType === 'sui',
   );
 
-  const suiWallets = user?.linkedAccounts.filter(
+  const existingSuiWallets = user?.linkedAccounts.filter(
     (account): account is WalletWithMetadata =>
       account.type === 'wallet' &&
       account.walletClientType === 'privy' &&
       account.chainType === 'sui',
   ) || [];
+  
+  // Merge existing wallets with newly created ones (which have public_key)
+  const suiWallets = [
+    ...existingSuiWallets.map(wallet => ({
+      ...wallet,
+      // Check if we have a newly created wallet with the same address
+      public_key: newlyCreatedWallets.find(newWallet => newWallet.address === wallet.address)?.public_key
+    })),
+    // Add any newly created wallets that aren't in linkedAccounts yet
+    ...newlyCreatedWallets.filter(newWallet => 
+      !existingSuiWallets.some(existing => existing.address === newWallet.address)
+    )
+  ];
 
   /**
    *
@@ -49,7 +63,24 @@ export default function Wallets() {
       const createSuiWalletWithErrorHandling = async () => {
         try {
           setWalletCreationError('');
-          await createSuiWallet({chainType: 'sui'});
+          const {user, wallet} = await createSuiWallet({chainType: 'sui'});
+
+          console.log('address', wallet.address);
+          console.log('wallet', wallet);
+          console.log('user', user);
+          
+          console.log('pubkey', wallet.public_key);
+          
+          // Store the newly created wallet with its public key
+          if (wallet.public_key) {
+            setNewlyCreatedWallets(prev => {
+              // Remove any existing wallet with the same address and add the new one
+              const filtered = prev.filter(w => w.address !== wallet.address);
+              return [...filtered, wallet];
+            });
+            console.log('✅ Stored wallet with public key for future use');
+          }
+          
           toast.success('Sui wallet created successfully!');
         } catch (error: any) {
           // Suppress the HD wallet error as it's expected for Sui
