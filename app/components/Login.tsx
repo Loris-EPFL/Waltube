@@ -171,8 +171,10 @@ const Login = () => {
             <p className="status-text">Status: {smsState}</p>
           </div>
         </div>
+        {/* 
         <h2 className="text-xl font-bold mb-4 text-left mt-2">OAuth</h2>
         <OAuth />
+        */}
       </div>
     </div>
   );
