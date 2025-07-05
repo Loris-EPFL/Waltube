@@ -203,10 +203,11 @@ async function handleUploadMP4(request: NextRequest) {
   try {
     const formData = await request.formData();
     const videoName = formData.get('videoName') as string;
-    const mp4File = formData.get('mp4File') as File;
+    const qualities = JSON.parse(formData.get('qualities') as string || '[]');
+    const thumbnail = formData.get('thumbnail') as File | null;
     
-    if (!videoName || !mp4File) {
-      throw new Error('Video name and MP4 file are required');
+    if (!videoName || qualities.length === 0) {
+      throw new Error('Video name and at least one quality are required');
     }
     
     const tusky = await getTuskyInstance();
@@ -215,18 +216,47 @@ async function handleUploadMP4(request: NextRequest) {
     const vaultName = `WALTUBE_MP4_${videoName}`;
     const { id: vaultId } = await tusky.vault.create(vaultName, { encrypted: false });
     
-    // Upload MP4 file
-    const mp4UploadId = await tusky.file.upload(vaultId, mp4File, {
-      name: `${videoName}.mp4`,
-      mimeType: 'video/mp4'
-    });
+    const uploadedFiles: any = {
+      qualities: {},
+      thumbnail: null
+    };
+    
+    // Upload thumbnail if provided
+    if (thumbnail) {
+      const thumbnailUploadId = await tusky.file.upload(vaultId, thumbnail, {
+        name: 'thumbnail.png',
+        mimeType: 'image/png'
+      });
+      uploadedFiles.thumbnail = {
+        fileId: thumbnailUploadId,
+        fileName: 'thumbnail.png',
+        fileSize: thumbnail.size
+      };
+    }
+    
+    // Upload video files for each quality
+    for (const quality of qualities) {
+      const videoFile = formData.get(`video_${quality}`) as File;
+      if (videoFile) {
+        const videoUploadId = await tusky.file.upload(vaultId, videoFile, {
+          name: `${videoName}_${quality}.mp4`,
+          mimeType: 'video/mp4'
+        });
+        
+        uploadedFiles.qualities[quality] = {
+          fileId: videoUploadId,
+          fileName: `${videoName}_${quality}.mp4`,
+          fileSize: videoFile.size
+        };
+      }
+    }
     
     return NextResponse.json({
       success: true,
       vaultId,
-      fileId: mp4UploadId,
-      fileName: `${videoName}.mp4`,
-      fileSize: mp4File.size
+      vaultName: videoName,
+      uploadedFiles,
+      qualityCount: qualities.length
     });
   } catch (error: any) {
     throw new Error(`MP4 upload failed: ${error.message}`);
@@ -245,15 +275,41 @@ async function handleGetMP4Videos() {
     for (const vault of mp4Vaults) {
       try {
         const files = await tusky.file.listAll({ vaultId: vault.id });
-        const mp4File = files.find((f: any) => f.name.endsWith('.mp4'));
         
-        if (mp4File) {
+        // Find thumbnail
+        const thumbnailFile = files.find((f: any) => f.name === 'thumbnail.png');
+        
+        // Find video files by quality
+        const videoFiles = files.filter((f: any) => f.name.endsWith('.mp4'));
+        const qualities: any = {};
+        let totalSize = 0;
+        
+        for (const videoFile of videoFiles) {
+          // Extract quality from filename (e.g., "video_720p.mp4")
+          const qualityMatch = videoFile.name.match(/_([0-9]+p)\.mp4$/);
+          if (qualityMatch) {
+            const quality = qualityMatch[1];
+            qualities[quality] = {
+              fileId: videoFile.id,
+              fileName: videoFile.name,
+              fileSize: videoFile.size || 0
+            };
+            totalSize += videoFile.size || 0;
+          }
+        }
+        
+        if (Object.keys(qualities).length > 0) {
           stored.push({
             vaultId: vault.id,
             vaultName: vault.name.replace('WALTUBE_MP4_', ''),
-            fileId: mp4File.id,
-            fileName: mp4File.name,
-            fileSize: mp4File.size || 0,
+            qualities,
+            thumbnail: thumbnailFile ? {
+              fileId: thumbnailFile.id,
+              fileName: thumbnailFile.name,
+              fileSize: thumbnailFile.size || 0
+            } : null,
+            totalSize,
+            qualityCount: Object.keys(qualities).length,
             createdAt: vault.createdAt || new Date().toISOString()
           });
         }

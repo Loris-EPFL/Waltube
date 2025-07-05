@@ -44,9 +44,20 @@ const sliderStyles = `
 interface MP4Video {
   vaultId: string;
   vaultName: string;
-  fileId: string;
-  fileName: string;
-  fileSize: number;
+  qualities: {
+    [quality: string]: {
+      fileId: string;
+      fileName: string;
+      fileSize: number;
+    };
+  };
+  thumbnail: {
+    fileId: string;
+    fileName: string;
+    fileSize: number;
+  } | null;
+  totalSize: number;
+  qualityCount: number;
   createdAt: string;
 }
 
@@ -58,6 +69,7 @@ export default function MP4StreamPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [video, setVideo] = useState<MP4Video | null>(null);
+  const [selectedQuality, setSelectedQuality] = useState<string>('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -113,6 +125,16 @@ export default function MP4StreamPage() {
       }
       
       setVideo(targetVideo);
+      
+      // Auto-select the best available quality (highest resolution)
+      const availableQualities = Object.keys(targetVideo.qualities);
+      if (availableQualities.length > 0) {
+        // Sort qualities by resolution (1080p > 720p > 480p > 360p)
+        const qualityOrder = ['1080p', '720p', '480p', '360p'];
+        const bestQuality = qualityOrder.find(q => availableQualities.includes(q)) || availableQualities[0];
+        setSelectedQuality(bestQuality);
+      }
+      
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -122,18 +144,41 @@ export default function MP4StreamPage() {
   };
 
   // Stream video
-  const streamVideo = async () => {
+  const streamVideo = async (quality?: string) => {
     if (!video) return;
+    
+    const qualityToUse = quality || selectedQuality;
+    if (!qualityToUse || !video.qualities[qualityToUse]) {
+      setError('Selected quality not available');
+      return;
+    }
     
     try {
       setIsLoading(true);
-      const streamUrl = `/api/tusky?action=stream&fileId=${video.fileId}`;
+      const fileId = video.qualities[qualityToUse].fileId;
+      const streamUrl = `/api/tusky?action=stream&fileId=${fileId}`;
       setVideoUrl(streamUrl);
       setError(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle quality change
+  const handleQualityChange = (quality: string) => {
+    if (video && video.qualities[quality]) {
+      const currentVideoTime = videoRef.current?.currentTime || 0;
+      setSelectedQuality(quality);
+      streamVideo(quality);
+      
+      // Restore playback position after quality change
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = currentVideoTime;
+        }
+      }, 100);
     }
   };
 
@@ -279,10 +324,10 @@ export default function MP4StreamPage() {
   }, [isConnected, videoId]);
 
   useEffect(() => {
-    if (video && !videoUrl) {
+    if (video && selectedQuality && !videoUrl) {
       streamVideo();
     }
-  }, [video?.fileId]); // Only depend on fileId to prevent unnecessary re-renders
+  }, [video, selectedQuality]); // Depend on video and selectedQuality
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -337,23 +382,74 @@ export default function MP4StreamPage() {
           <div className="w-full bg-base-200 rounded-lg shadow-xl p-6 mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4">Video Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600 mb-1">Name</div>
-                  <div className="text-lg font-semibold text-gray-900">{video.vaultName}</div>
+              
+              <div className="flex items-start space-x-6 mb-6">
+                {/* Thumbnail */}
+                {video.thumbnail && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={`/api/tusky?action=stream&fileId=${video.thumbnail.fileId}`}
+                      alt={`${video.vaultName} thumbnail`}
+                      className="w-32 h-auto rounded-lg border border-gray-300 shadow-md"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {/* Video Details */}
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{video.vaultName}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Total Size</div>
+                      <div className="text-lg font-semibold text-gray-900">{(video.totalSize / 1024 / 1024).toFixed(2)} MB</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Qualities Available</div>
+                      <div className="text-lg font-semibold text-gray-900">{video.qualityCount}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Current Quality</div>
+                      <div className="text-lg font-semibold text-gray-900">{selectedQuality || 'None'}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm font-medium text-gray-600 mb-1">Created</div>
+                      <div className="text-lg font-semibold text-gray-900">{new Date(video.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600 mb-1">File</div>
-                  <div className="text-lg font-semibold text-gray-900">{video.fileName}</div>
+              </div>
+              
+              {/* Quality Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Video Quality
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(video.qualities).map(([quality, qualityInfo]) => (
+                    <button
+                      key={quality}
+                      onClick={() => handleQualityChange(quality)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedQuality === quality
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {quality}
+                      <span className="block text-xs opacity-75">
+                        {(qualityInfo.fileSize / 1024 / 1024).toFixed(1)} MB
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600 mb-1">Size</div>
-                  <div className="text-lg font-semibold text-gray-900">{(video.fileSize / 1024 / 1024).toFixed(2)} MB</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600 mb-1">Created</div>
-                  <div className="text-lg font-semibold text-gray-900">{new Date(video.createdAt).toLocaleDateString()}</div>
-                </div>
+                {selectedQuality && video.qualities[selectedQuality] && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Current: {video.qualities[selectedQuality].fileName} ({(video.qualities[selectedQuality].fileSize / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
               </div>
             </div>
           </div>

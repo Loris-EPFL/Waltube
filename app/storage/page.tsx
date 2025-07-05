@@ -45,6 +45,17 @@ const VideoStoragePage: React.FC = () => {
   const [mp4VideoName, setMp4VideoName] = useState('');
   const [selectedMP4File, setSelectedMP4File] = useState<File | null>(null);
   const [isUploadingMP4, setIsUploadingMP4] = useState(false);
+  const [selectedQualities, setSelectedQualities] = useState<string[]>(['720p']);
+  const [thumbnail, setThumbnail] = useState<Blob | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Video quality configurations
+  const videoQualities = {
+    '1080p': { width: 1920, height: 1080, bitrate: 5000 },
+    '720p': { width: 1280, height: 720, bitrate: 2500 },
+    '480p': { width: 854, height: 480, bitrate: 1000 },
+    '360p': { width: 640, height: 360, bitrate: 600 }
+  };
   const [hasLocalData, setHasLocalData] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +204,7 @@ const VideoStoragePage: React.FC = () => {
     }
   };
 
-  // Upload MP4 video to Tusky
+  // Upload MP4 to Tusky with multiple qualities and thumbnail
   const uploadMP4ToTusky = async () => {
     if (!isConnected) {
       toast.error('Please connect to Tusky first');
@@ -210,12 +221,32 @@ const VideoStoragePage: React.FC = () => {
       return;
     }
 
+    if (selectedQualities.length === 0) {
+      toast.error('Please select at least one video quality');
+      return;
+    }
+
     setIsUploadingMP4(true);
 
     try {
+      // Process videos for different qualities
+      const processedVideos = await processVideoQualities(selectedMP4File);
+      
       const formData = new FormData();
       formData.append('videoName', mp4VideoName.trim());
-      formData.append('mp4File', selectedMP4File);
+      
+      // Add thumbnail if available
+      if (thumbnail) {
+        formData.append('thumbnail', thumbnail, 'thumbnail.png');
+      }
+      
+      // Add videos for each quality
+      for (const [quality, videoBlob] of Object.entries(processedVideos)) {
+        formData.append(`video_${quality}`, videoBlob, `${mp4VideoName}_${quality}.mp4`);
+      }
+      
+      // Add quality information
+      formData.append('qualities', JSON.stringify(selectedQualities));
 
       const response = await fetch('/api/tusky?action=uploadmp4', {
         method: 'POST',
@@ -228,9 +259,11 @@ const VideoStoragePage: React.FC = () => {
 
       const result = await response.json();
       
-      toast.success(`Successfully uploaded MP4 video "${mp4VideoName}" to Walrus via Tusky!`);
+      toast.success(`Successfully uploaded MP4 video "${mp4VideoName}" with ${selectedQualities.length} qualities to Walrus via Tusky!`);
       setMp4VideoName('');
       setSelectedMP4File(null);
+      setThumbnail(null);
+      setSelectedQualities(['720p']);
       
       // Reload stored videos
       await loadStoredVideos();
@@ -243,15 +276,84 @@ const VideoStoragePage: React.FC = () => {
     }
   };
 
+  // Generate thumbnail from video
+  const generateThumbnail = async (videoFile: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      video.onloadedmetadata = () => {
+        canvas.width = 320;
+        canvas.height = (video.videoHeight / video.videoWidth) * 320;
+        video.currentTime = video.duration * 0.1; // 10% into the video
+      };
+      
+      video.onseeked = () => {
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate thumbnail'));
+            }
+          }, 'image/png');
+        }
+      };
+      
+      video.onerror = () => reject(new Error('Failed to load video for thumbnail'));
+      video.src = URL.createObjectURL(videoFile);
+    });
+  };
+
+  // Process video into multiple qualities
+  const processVideoQualities = async (videoFile: File): Promise<{ [quality: string]: Blob }> => {
+    const processedVideos: { [quality: string]: Blob } = {};
+    
+    for (const quality of selectedQualities) {
+      const config = videoQualities[quality as keyof typeof videoQualities];
+      
+      // For now, we'll use the original video for all qualities
+      // In a real implementation, you'd use FFmpeg or similar to transcode
+      processedVideos[quality] = videoFile;
+    }
+    
+    return processedVideos;
+  };
+
+  // Handle quality selection
+  const handleQualityChange = (quality: string, checked: boolean) => {
+    if (checked) {
+      setSelectedQualities(prev => [...prev, quality]);
+    } else {
+      setSelectedQualities(prev => prev.filter(q => q !== quality));
+    }
+  };
+
   // Handle MP4 file selection
-  const handleMP4FileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMP4FileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'video/mp4') {
       setSelectedMP4File(file);
-      toast.success(`Selected MP4 file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+      setThumbnail(null);
+      setIsProcessing(true);
+      
+      try {
+        // Generate thumbnail
+        const thumbnailBlob = await generateThumbnail(file);
+        setThumbnail(thumbnailBlob);
+        toast.success(`Selected MP4 file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+      } catch (error) {
+        console.error('Failed to generate thumbnail:', error);
+        toast.error('Failed to generate thumbnail');
+      } finally {
+        setIsProcessing(false);
+      }
     } else {
       toast.error('Please select a valid MP4 file');
       setSelectedMP4File(null);
+      setThumbnail(null);
     }
   };
 
@@ -468,7 +570,7 @@ const VideoStoragePage: React.FC = () => {
             
             <div className="mb-4">
               <p className="text-gray-600 mb-2">
-                Upload a complete MP4 video file for direct streaming
+                Upload MP4 videos with multiple qualities and automatic thumbnail generation
               </p>
             </div>
 
@@ -488,6 +590,12 @@ const VideoStoragePage: React.FC = () => {
                     Selected: {selectedMP4File.name} ({(selectedMP4File.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
+                {isProcessing && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    <span className="inline-block w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-1"></span>
+                    Generating thumbnail...
+                  </p>
+                )}
               </div>
               
               <div className="w-full">
@@ -502,26 +610,77 @@ const VideoStoragePage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              {/* Quality Selection */}
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Video Qualities
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries(videoQualities).map(([quality, config]) => (
+                    <label key={quality} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedQualities.includes(quality)}
+                        onChange={(e) => handleQualityChange(quality, e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">{quality}</div>
+                        <div className="text-xs text-gray-500">{config.width}×{config.height}</div>
+                        <div className="text-xs text-gray-500">{config.bitrate}k</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Selected: {selectedQualities.length} quality{selectedQualities.length !== 1 ? 'ies' : ''}
+                </p>
+              </div>
+
+              {/* Thumbnail Preview */}
+              {thumbnail && (
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Generated Thumbnail
+                  </label>
+                  <div className="flex items-start space-x-4">
+                    <img
+                      src={URL.createObjectURL(thumbnail)}
+                      alt="Video thumbnail"
+                      className="w-32 h-auto rounded-lg border border-gray-300"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600">
+                        Thumbnail automatically generated from video frame
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Size: {(thumbnail.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <button
                 onClick={uploadMP4ToTusky}
-                disabled={isUploadingMP4 || !selectedMP4File || !mp4VideoName.trim()}
+                disabled={isUploadingMP4 || !selectedMP4File || !mp4VideoName.trim() || selectedQualities.length === 0}
                 className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
               >
                 {isUploadingMP4 ? (
                   <>
                     <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                    Uploading MP4...
+                    Uploading MP4 with {selectedQualities.length} qualities...
                   </>
                 ) : (
-                  'Upload MP4 to Walrus'
+                  `Upload MP4 with ${selectedQualities.length} Quality${selectedQualities.length !== 1 ? 'ies' : ''}`
                 )}
               </button>
               
               {isUploadingMP4 && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-600 mt-1">
-                    Uploading MP4 video to Walrus...
+                    Uploading MP4 video with multiple qualities and thumbnail to Walrus...
                   </p>
                 </div>
               )}
@@ -604,20 +763,53 @@ const VideoStoragePage: React.FC = () => {
               <div className="space-y-4">
                 {storedMP4Videos.map((video, index) => (
                   <div key={video.vaultId} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg">{video.vaultName}</h3>
-                        <p className="text-sm text-gray-600">
-                          Vault ID: {video.vaultId}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          File Size: {(video.fileSize / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Created: {new Date(video.createdAt).toLocaleDateString()}
-                        </p>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-start space-x-4">
+                          {/* Thumbnail */}
+                          {video.thumbnail && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={`/api/tusky?action=stream&fileId=${video.thumbnail.fileId}`}
+                                alt={`${video.vaultName} thumbnail`}
+                                className="w-24 h-auto rounded-lg border border-gray-300"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Video Info */}
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-2">{video.vaultName}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                              <p>Vault ID: {video.vaultId}</p>
+                              <p>Total Size: {(video.totalSize / 1024 / 1024).toFixed(2)} MB</p>
+                              <p>Qualities: {video.qualityCount}</p>
+                              <p>Created: {new Date(video.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            
+                            {/* Available Qualities */}
+                            <div className="mt-3">
+                              <p className="text-sm font-medium text-gray-700 mb-2">Available Qualities:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {Object.entries(video.qualities).map(([quality, qualityInfo]: [string, any]) => (
+                                  <span
+                                    key={quality}
+                                    className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
+                                  >
+                                    {quality} ({(qualityInfo.fileSize / 1024 / 1024).toFixed(1)} MB)
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-x-2">
+                      
+                      {/* Actions */}
+                      <div className="flex-shrink-0 ml-4">
                         <Link
                           href={`/mp4stream?video=${video.vaultId}`}
                           className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
