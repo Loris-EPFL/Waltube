@@ -1,8 +1,44 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+
+// Custom styles for the range slider
+const sliderStyles = `
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  .slider::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  .slider::-webkit-slider-track {
+    height: 8px;
+    background: transparent;
+    border-radius: 4px;
+  }
+  
+  .slider::-moz-range-track {
+    height: 8px;
+    background: transparent;
+    border-radius: 4px;
+  }
+`;
 
 interface MP4Video {
   vaultId: string;
@@ -25,6 +61,8 @@ export default function MP4StreamPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -133,6 +171,35 @@ export default function MP4StreamPage() {
     }
   };
 
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      if (newVolume === 0) {
+        setIsMuted(true);
+      } else {
+        setIsMuted(false);
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      if (isMuted) {
+        videoRef.current.volume = volume;
+        setIsMuted(false);
+      } else {
+        videoRef.current.volume = 0;
+        setIsMuted(true);
+      }
+    }
+  };
+
+  const handleVideoClick = () => {
+    togglePlayback();
+  };
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -158,6 +225,7 @@ export default function MP4StreamPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
+      <style dangerouslySetInnerHTML={{ __html: sliderStyles }} />
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -220,38 +288,57 @@ export default function MP4StreamPage() {
               <video
                 ref={videoRef}
                 src={videoUrl}
-                className="w-full h-auto"
+                className="w-full h-auto cursor-pointer"
                 onPlay={handlePlay}
                 onPause={handlePause}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onProgress={handleProgress}
+                onClick={handleVideoClick}
                 controls={false}
               />
+              
+              {/* Play/Pause Overlay */}
+              {!isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 cursor-pointer" onClick={handleVideoClick}>
+                  <div className="bg-white bg-opacity-90 rounded-full p-4">
+                    <svg className="w-12 h-12 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Custom Controls */}
             <div className="space-y-4">
               {/* Progress Bar */}
-              <div className="relative">
+              <div className="space-y-2">
+                {/* Visual Progress Display */}
+                <div className="relative w-full h-2 bg-gray-200 rounded-lg overflow-hidden">
+                  {/* Buffer Progress */}
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-gray-400 transition-all duration-200"
+                    style={{ width: `${duration > 0 ? (buffered / duration) * 100 : 0}%` }}
+                  ></div>
+                  {/* Play Progress */}
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-200"
+                    style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                  ></div>
+                </div>
+                {/* Interactive Seek Bar */}
                 <input
                   type="range"
                   min="0"
                   max={duration || 0}
                   value={currentTime}
                   onChange={handleSeek}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-2 bg-transparent appearance-none cursor-pointer slider"
+                  style={{
+                    background: 'transparent',
+                  }}
                 />
-                {/* Buffer Progress */}
-                <div 
-                  className="absolute top-0 h-2 bg-gray-400 rounded-lg pointer-events-none"
-                  style={{ width: `${duration > 0 ? (buffered / duration) * 100 : 0}%` }}
-                ></div>
-                {/* Play Progress */}
-                <div 
-                  className="absolute top-0 h-2 bg-blue-600 rounded-lg pointer-events-none"
-                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
-                ></div>
               </div>
 
               {/* Time Display */}
@@ -260,13 +347,59 @@ export default function MP4StreamPage() {
                 <span>{formatTime(duration)}</span>
               </div>
 
+              {/* Volume Control */}
+              <div className="flex items-center space-x-4 mb-4">
+                <button
+                  onClick={toggleMute}
+                  className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  {isMuted || volume === 0 ? (
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.828 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.828l3.555-3.793A1 1 0 019.383 3.076zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  ) : volume < 0.5 ? (
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.828 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.828l3.555-3.793A1 1 0 019.383 3.076zM12.146 5.146a.5.5 0 01.708 0 4 4 0 010 5.708.5.5 0 01-.708-.708 3 3 0 000-4.292.5.5 0 010-.708z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.828 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.828l3.555-3.793A1 1 0 019.383 3.076zM12.146 5.146a.5.5 0 01.708 0 4 4 0 010 5.708.5.5 0 01-.708-.708 3 3 0 000-4.292.5.5 0 010-.708zm2.854 0a.5.5 0 01.708 0 6 6 0 010 8.708.5.5 0 01-.708-.708 5 5 0 000-7.292.5.5 0 010-.708z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={isMuted ? 0 : volume}
+                  onChange={handleVolumeChange}
+                  className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="text-sm text-gray-600 w-8">{Math.round((isMuted ? 0 : volume) * 100)}%</span>
+              </div>
+
               {/* Control Buttons */}
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={togglePlayback}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                 >
-                  {isPlaying ? '⏸️ Pause' : '▶️ Play'}
+                  {isPlaying ? (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <span>Pause</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                      </svg>
+                      <span>Play</span>
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -294,12 +427,12 @@ export default function MP4StreamPage() {
           >
             ← Back to Storage
           </Link>
-          <Link
+          {/* <Link
             href="/stream"
             className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             🎬 Try HLS Streaming
-          </Link>
+          </Link> */}
         </div>
       </div>
     </div>
