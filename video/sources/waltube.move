@@ -12,8 +12,7 @@ module video::waltube {
         owner_name: String
     }
 
-    public struct User has key, store{
-        id: UID,
+    public struct User has store{
         name: String, 
         surname: String,
         email: String,
@@ -28,7 +27,6 @@ module video::waltube {
         description: String,
         vault_id: String,
         user: &mut User,
-        ctx: &mut TxContext
     ) {
         let video = Video {
             title,
@@ -46,9 +44,7 @@ module video::waltube {
         new_title: String,
         new_description: String,
         vault_id: String,
-        ctx: &TxContext
     ) {
-        assert!(tx_context::sender(ctx) == object::uid_to_address(&user.id), 0);
 
         let len = vector::length(&user.vids);
         let mut i = 0;
@@ -70,9 +66,7 @@ module video::waltube {
     public fun delete_video_by_id(
         user: &mut User,
         vault_id: String,
-        ctx: &TxContext
     ) {
-        assert!(tx_context::sender(ctx) == object::uid_to_address(&user.id), 0);
 
         let len = vector::length(&user.vids);
         let mut i = 0;
@@ -94,13 +88,46 @@ module video::waltube {
     public fun replace_video_list(
         user: &mut User,
         new_videos: vector<Video>,
-        ctx: &TxContext
     ) {
-        assert!(tx_context::sender(ctx) == object::uid_to_address(&user.id), 0);
-
         user.vids = new_videos;
         user.video_count = vector::length(&user.vids);
     }
+
+    public fun create_user(
+    name: String,
+    surname: String,
+    email: String,
+    phone_num: String,
+    country: String,
+): User {
+    User {
+        name,
+        surname,
+        email,
+        phone_num,
+        country,
+        video_count: 0,
+        vids: vector::empty<Video>()
+    }
+}
+
+public fun edit_user_info(
+    user: &mut User,
+    new_name: String,
+    new_surname: String,
+    new_email: String,
+    new_phone_num: String,
+    new_country: String,
+) {
+
+    user.name = new_name;
+    user.surname = new_surname;
+    user.email = new_email;
+    user.phone_num = new_phone_num;
+    user.country = new_country;
+}
+
+
 }
 
 
