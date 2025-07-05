@@ -143,9 +143,9 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
         publicKey,
       });
       
-      // Verify the signature using the public key's verifyPersonalMessage method
-      // This method handles the intent wrapping internally and is the correct way to verify
-      const isValid = await publicKey.verifyPersonalMessage(messageBytes, messageSignature);
+      // Since we signed the intent-wrapped message hash directly, we need to verify it differently
+      // We'll verify the signature against the same hash we signed
+      const isValid = publicKey.verify(digest, rawSigBytes);
       console.log('Signature verification result:', isValid);
       
       if (!isValid) {
