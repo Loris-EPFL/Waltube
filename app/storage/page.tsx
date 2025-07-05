@@ -379,7 +379,7 @@ const VideoStoragePage: React.FC = () => {
           )}
         </div>
 
-        {/* Local Data Status */}
+        {/* Local Data Status 
         {isConnected && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Local Data Status</h2>
@@ -409,8 +409,9 @@ const VideoStoragePage: React.FC = () => {
             )}
           </div>
         )}
+          */}
 
-        {/* Upload Section - HLS Segments */}
+        {/* Upload Section - HLS Segments
         {isConnected && hasLocalData && segments.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">📺 Upload HLS Video to Walrus</h2>
@@ -453,6 +454,7 @@ const VideoStoragePage: React.FC = () => {
             </div>
           </div>
         )}
+           */}
 
         {/* Upload Section - MP4 Video */}
         {isConnected && (
@@ -515,7 +517,7 @@ const VideoStoragePage: React.FC = () => {
           </div>
         )}
 
-        {/* Stored Videos */}
+        {/* Stored Videos 
         {isConnected && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">📺 Stored HLS Videos on Walrus</h2>
@@ -576,6 +578,8 @@ const VideoStoragePage: React.FC = () => {
           </div>
         )}
 
+        */}
+
         {/* Stored MP4 Videos */}
         {isConnected && (
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -618,12 +622,12 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Navigation */}
         <div className="mt-8 text-center">
-          <Link
+          {/* <Link
             href="/upload"
             className="inline-block px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors mr-4"
           >
             ← Back to Upload
-          </Link>
+          </Link> */}
           <Link
             href="/"
             className="inline-block px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
