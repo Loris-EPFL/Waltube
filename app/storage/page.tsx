@@ -345,7 +345,7 @@ const VideoStoragePage: React.FC = () => {
         </div>
 
         {/* Tusky Connection */}
-        <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+        <div className="w-full bg-base-200 rounded-lg shadow-xl p-6 mb-6">
           <div className="w-full">
             <h2 className="text-2xl font-bold mb-4">Tusky Connection</h2>
           {isInitializing ? (
@@ -385,7 +385,7 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Local Data Status 
         {isConnected && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-base-200 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Local Data Status</h2>
             {hasLocalData ? (
               <div className="space-y-2">
@@ -417,7 +417,7 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Upload Section - HLS Segments
         {isConnected && hasLocalData && segments.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-base-200 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">📺 Upload HLS Video to Walrus</h2>
             
             <div className="mb-4">
@@ -462,7 +462,7 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Upload Section - MP4 Video */}
         {isConnected && (
-          <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+          <div className="w-full bg-base-200 rounded-lg shadow-xl p-6 mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4">🎬 Upload MP4 Video to Walrus</h2>
             
@@ -532,7 +532,7 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Stored Videos 
         {isConnected && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-base-200 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">📺 Stored HLS Videos on Walrus</h2>
             
             {storedVideos.length === 0 ? (
@@ -595,7 +595,7 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Stored MP4 Videos */}
         {isConnected && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-base-200 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">🎬 Stored MP4 Videos on Walrus</h2>
             
             {storedMP4Videos.length === 0 ? (

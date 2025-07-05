@@ -46,31 +46,31 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            <div className="w-full bg-white rounded-lg shadow-lg p-6">
+            <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
               <div className="text-center">
                 <div className="text-4xl mb-4">📁</div>
                 <h3 className="text-lg font-bold mb-2">Walrus Storage</h3>
-                <p className="text-gray-600">
+                <p className="text-base-content opacity-70">
                   Upload your processed video segments to Walrus storage using Tusky SDK for decentralized storage
                 </p>
               </div>
             </div>
             
-            <div className="w-full bg-white rounded-lg shadow-lg p-6">
+            <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
               <div className="text-center">
                 <div className="text-4xl mb-4">📤</div>
                 <h3 className="text-lg font-bold mb-2">Video Upload</h3>
-                <p className="text-gray-600">
+                <p className="text-base-content opacity-70">
                   Upload MP4 videos and automatically store them into Walrus, and share / sell them.
                 </p>
               </div>
             </div>
             
-            <div className="w-full bg-white rounded-lg shadow-lg p-6">
+            <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
               <div className="text-center">
                 <div className="text-4xl mb-4">🎬</div>
                 <h3 className="text-lg font-bold mb-2">Video Streaming</h3>
-                <p className="text-gray-600">
+                <p className="text-base-content opacity-70">
                   Stream your stored videos directly from Walrus with progressive loading and high quality
                 </p>
               </div>

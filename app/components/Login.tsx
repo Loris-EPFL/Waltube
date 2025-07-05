@@ -120,7 +120,7 @@ const Login = () => {
 
         <div className="max-w-md mx-auto">
           {/* Email Authentication Card */}
-          <div className="w-full bg-white rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="w-full bg-base-200 rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 p-6">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="avatar placeholder">

@@ -307,7 +307,7 @@ export default function MP4StreamPage() {
         </div>
 
         {/* Connection Status */}
-        <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+        <div className="w-full bg-base-200 rounded-lg shadow-xl p-6 mb-6">
           <div className="w-full">
             <h2 className="text-2xl font-bold mb-4">Connection Status</h2>
             <div className="flex items-center space-x-4">
@@ -334,7 +334,7 @@ export default function MP4StreamPage() {
 
         {/* Video Info */}
         {video && (
-          <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+          <div className="w-full bg-base-200 rounded-lg shadow-xl p-6 mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4">Video Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -361,7 +361,7 @@ export default function MP4StreamPage() {
 
         {/* Video Player */}
         {videoUrl && (
-          <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+          <div className="w-full bg-base-200 rounded-lg shadow-xl p-6 mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4">Video Player</h2>
             

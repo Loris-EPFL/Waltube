@@ -17,7 +17,7 @@
 }
 
 .status-text {
-  @apply text-sm text-gray-600;
+  @apply text-sm text-base-content opacity-70;
 }
 
 .link {
@@ -34,11 +34,11 @@
 }
 
 .wallet-address {
-  @apply text-xs text-gray-500 break-words mb-2;
+  @apply text-xs text-base-content opacity-60 break-words mb-2;
 }
 
 .wallet-chainId {
-  @apply text-xs text-gray-500 break-words mb-2;
+  @apply text-xs text-base-content opacity-60 break-words mb-2;
 }
 
 .wallet-button {
@@ -50,5 +50,5 @@
 }
 
 .wallet-button-secondary {
-  @apply bg-[#ffffff] border border-[#e2e3f0] text-black;
+  @apply bg-base-200 border border-base-300 text-base-content;
 }

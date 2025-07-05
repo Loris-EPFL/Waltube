@@ -320,7 +320,7 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
 
   return (
     <div className="w-full space-y-4">
-      <div className="w-full bg-gray-100 rounded-lg shadow-md p-6">
+      <div className="w-full bg-base-200 rounded-lg shadow-md p-6">
         <div className="w-full">
           <h3 className="text-lg font-bold mb-2 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -372,7 +372,7 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
         </div>
       </div>
       {showSignMessage && (
-        <div className="w-full bg-white rounded-lg shadow-lg p-6">
+        <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
           <div className="w-full">
             <h2 className="text-lg font-bold mb-4 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -446,7 +446,7 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
         </div>
       )}
       {showSendTransaction && (
-        <div className="w-full bg-white rounded-lg shadow-lg p-6">
+        <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
           <div className="w-full">
             <h2 className="text-lg font-bold mb-4 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

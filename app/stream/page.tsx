@@ -328,7 +328,7 @@ const VideoStreamPage: React.FC = () => {
         </div>
 
         {/* Connection Status */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-base-200 rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className={`w-3 h-3 rounded-full ${
@@ -352,7 +352,7 @@ const VideoStreamPage: React.FC = () => {
 
         {/* Video Player */}
         {selectedVideo && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-base-200 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-2xl font-bold mb-4">Now Playing: {selectedVideo.vaultName}</h2>
             
             <div className="relative bg-black rounded-lg overflow-hidden mb-4">
@@ -441,7 +441,7 @@ const VideoStreamPage: React.FC = () => {
         )}
 
         {/* Video Library */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-base-200 rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold mb-4">📚 Video Library</h2>
           
           {storedVideos.length === 0 ? (
