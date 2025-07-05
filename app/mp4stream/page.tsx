@@ -419,7 +419,7 @@ export default function MP4StreamPage() {
                 
                 {/* Video Details */}
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{video.vaultName}</h3>
+                  <h3 className="text-xl font-semibold  mb-3">{video.vaultName}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-sm font-medium text-gray-600 mb-1">Total Size</div>
@@ -617,13 +617,12 @@ export default function MP4StreamPage() {
                 <div>
                   <span className="font-medium">Status:</span> {isPlaying ? 'Playing' : 'Paused'}
                 </div>
-                {/* <div>
-                  <span className="font-medium">Buffered:</span> {formatTime(buffered)}
-                </div> */}
-                <div>
+
+                <div className="text-right">
                   <span className="font-medium">Progress:</span> {duration > 0 ? Math.round((currentTime / duration) * 100) : 0}%
                 </div>
               </div>
+
             </div>
             </div>
           </div>
