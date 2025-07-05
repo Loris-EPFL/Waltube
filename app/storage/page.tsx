@@ -1,8 +1,9 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Link from 'next/link';
 
 interface VideoSegment {
   name: string;
@@ -23,14 +24,26 @@ interface StoredVideo {
   createdAt: string;
 }
 
+interface StoredMP4Video {
+  vaultId: string;
+  vaultName: string;
+  mp4FileId: string;
+  createdAt: string;
+  fileSize: number;
+}
+
 const VideoStoragePage: React.FC = () => {
   const [segments, setSegments] = useState<VideoSegment[]>([]);
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [storedVideos, setStoredVideos] = useState<StoredVideo[]>([]);
+  const [storedMP4Videos, setStoredMP4Videos] = useState<StoredMP4Video[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [videoName, setVideoName] = useState('');
+  const [mp4VideoName, setMp4VideoName] = useState('');
+  const [selectedMP4File, setSelectedMP4File] = useState<File | null>(null);
+  const [isUploadingMP4, setIsUploadingMP4] = useState(false);
   const [hasLocalData, setHasLocalData] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +84,13 @@ const VideoStoragePage: React.FC = () => {
       
       const videos = await response.json();
       setStoredVideos(videos);
+      
+      // Also load MP4 videos
+      const mp4Response = await fetch('/api/tusky?action=mp4videos');
+      if (mp4Response.ok) {
+        const mp4Videos = await mp4Response.json();
+        setStoredMP4Videos(mp4Videos);
+      }
     } catch (error: any) {
       console.error('Failed to load stored videos:', error);
       toast.error(`Failed to load videos: ${error.message}`);
@@ -169,6 +189,68 @@ const VideoStoragePage: React.FC = () => {
     } finally {
       setIsUploading(false);
       setUploadProgress({});
+    }
+  };
+
+  // Upload MP4 video to Tusky
+  const uploadMP4ToTusky = async () => {
+    if (!isConnected) {
+      toast.error('Please connect to Tusky first');
+      return;
+    }
+
+    if (!selectedMP4File) {
+      toast.error('Please select an MP4 file');
+      return;
+    }
+
+    if (!mp4VideoName.trim()) {
+      toast.error('Please enter a video name');
+      return;
+    }
+
+    setIsUploadingMP4(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('videoName', mp4VideoName.trim());
+      formData.append('mp4File', selectedMP4File);
+
+      const response = await fetch('/api/tusky?action=uploadmp4', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('MP4 upload failed');
+      }
+
+      const result = await response.json();
+      
+      toast.success(`Successfully uploaded MP4 video "${mp4VideoName}" to Walrus via Tusky!`);
+      setMp4VideoName('');
+      setSelectedMP4File(null);
+      
+      // Reload stored videos
+      await loadStoredVideos();
+      
+    } catch (error: any) {
+      console.error('MP4 upload failed:', error);
+      toast.error(`MP4 upload failed: ${error.message}`);
+    } finally {
+      setIsUploadingMP4(false);
+    }
+  };
+
+  // Handle MP4 file selection
+  const handleMP4FileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'video/mp4') {
+      setSelectedMP4File(file);
+      toast.success(`Selected MP4 file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    } else {
+      toast.error('Please select a valid MP4 file');
+      setSelectedMP4File(null);
     }
   };
 
@@ -328,14 +410,14 @@ const VideoStoragePage: React.FC = () => {
           </div>
         )}
 
-        {/* Upload Section */}
+        {/* Upload Section - HLS Segments */}
         {isConnected && hasLocalData && segments.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Upload Video to Walrus</h2>
+            <h2 className="text-xl font-semibold mb-4">📺 Upload HLS Video to Walrus</h2>
             
             <div className="mb-4">
               <p className="text-gray-600 mb-2">
-                Ready to upload {segments.length} video segments
+                Ready to upload {segments.length} video segments (HLS streaming)
               </p>
             </div>
 
@@ -358,13 +440,74 @@ const VideoStoragePage: React.FC = () => {
                 disabled={isUploading || !videoName.trim()}
                 className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 transition-colors"
               >
-                {isUploading ? 'Uploading...' : 'Upload to Walrus'}
+                {isUploading ? 'Uploading...' : 'Upload HLS to Walrus'}
               </button>
               
               {isUploading && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-600 mt-1">
-                    Uploading video to Walrus...
+                    Uploading video segments to Walrus...
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Upload Section - MP4 Video */}
+        {isConnected && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">🎬 Upload MP4 Video to Walrus</h2>
+            
+            <div className="mb-4">
+              <p className="text-gray-600 mb-2">
+                Upload a complete MP4 video file for direct streaming
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select MP4 File
+                </label>
+                <input
+                  type="file"
+                  accept="video/mp4"
+                  onChange={handleMP4FileSelect}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {selectedMP4File && (
+                  <p className="text-sm text-green-600 mt-1">
+                    Selected: {selectedMP4File.name} ({(selectedMP4File.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Video Name
+                </label>
+                <input
+                  type="text"
+                  value={mp4VideoName}
+                  onChange={(e) => setMp4VideoName(e.target.value)}
+                  placeholder="Enter a name for your MP4 video"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <button
+                onClick={uploadMP4ToTusky}
+                disabled={isUploadingMP4 || !selectedMP4File || !mp4VideoName.trim()}
+                className="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 transition-colors"
+              >
+                {isUploadingMP4 ? 'Uploading MP4...' : 'Upload MP4 to Walrus'}
+              </button>
+              
+              {isUploadingMP4 && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mt-1">
+                    Uploading MP4 video to Walrus...
                   </p>
                 </div>
               )}
@@ -374,11 +517,11 @@ const VideoStoragePage: React.FC = () => {
 
         {/* Stored Videos */}
         {isConnected && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Stored Videos on Walrus</h2>
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">📺 Stored HLS Videos on Walrus</h2>
             
             {storedVideos.length === 0 ? (
-              <p className="text-gray-600">No videos stored yet.</p>
+              <p className="text-gray-600">No HLS videos stored yet.</p>
             ) : (
               <div className="space-y-4">
                 {storedVideos.map((video, index) => (
@@ -403,6 +546,12 @@ const VideoStoragePage: React.FC = () => {
                         >
                           📺 Stream Playlist
                         </button>
+                        <Link
+                          href={`/stream?video=${video.vaultId}`}
+                          className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                        >
+                          🎬 Watch HLS
+                        </Link>
                       </div>
                     </div>
                     
@@ -418,6 +567,46 @@ const VideoStoragePage: React.FC = () => {
                             Segment {segmentIndex + 1}
                           </button>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stored MP4 Videos */}
+        {isConnected && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">🎬 Stored MP4 Videos on Walrus</h2>
+            
+            {storedMP4Videos.length === 0 ? (
+              <p className="text-gray-600">No MP4 videos stored yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {storedMP4Videos.map((video, index) => (
+                  <div key={video.vaultId} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-lg">{video.vaultName}</h3>
+                        <p className="text-sm text-gray-600">
+                          Vault ID: {video.vaultId}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          File Size: {(video.fileSize / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Created: {new Date(video.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="space-x-2">
+                        <Link
+                          href={`/mp4stream?video=${video.vaultId}`}
+                          className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                        >
+                          🎬 Watch MP4
+                        </Link>
                       </div>
                     </div>
                   </div>

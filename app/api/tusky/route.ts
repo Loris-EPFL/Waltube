@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
         return await handleConnect();
       case 'upload':
         return await handleUpload(request);
+      case 'uploadmp4':
+        return await handleUploadMP4(request);
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -43,6 +45,8 @@ export async function GET(request: NextRequest) {
     switch (action) {
       case 'videos':
         return await handleGetVideos();
+      case 'mp4videos':
+        return await handleGetMP4Videos();
       case 'download':
         const fileId = url.searchParams.get('fileId');
         if (!fileId) {
@@ -192,5 +196,74 @@ async function handleStream(fileId: string) {
     });
   } catch (error: any) {
     throw new Error(`Stream failed: ${error.message}`);
+  }
+}
+
+async function handleUploadMP4(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const videoName = formData.get('videoName') as string;
+    const mp4File = formData.get('mp4File') as File;
+    
+    if (!videoName || !mp4File) {
+      throw new Error('Video name and MP4 file are required');
+    }
+    
+    const tusky = await getTuskyInstance();
+    
+    // Create vault for this MP4 video
+    const vaultName = `WALTUBE_MP4_${videoName}`;
+    const { id: vaultId } = await tusky.vault.create(vaultName, { encrypted: false });
+    
+    // Upload MP4 file
+    const mp4UploadId = await tusky.file.upload(vaultId, mp4File, {
+      name: `${videoName}.mp4`,
+      mimeType: 'video/mp4'
+    });
+    
+    return NextResponse.json({
+      success: true,
+      vaultId,
+      fileId: mp4UploadId,
+      fileName: `${videoName}.mp4`,
+      fileSize: mp4File.size
+    });
+  } catch (error: any) {
+    throw new Error(`MP4 upload failed: ${error.message}`);
+  }
+}
+
+async function handleGetMP4Videos() {
+  try {
+    const tusky = await getTuskyInstance();
+    const vaults = await tusky.vault.listAll();
+    const mp4Vaults = vaults.filter((vault: any) => 
+      vault.name.startsWith('WALTUBE_MP4_')
+    );
+    
+    const stored: any[] = [];
+    for (const vault of mp4Vaults) {
+      try {
+        const files = await tusky.file.listAll({ vaultId: vault.id });
+        const mp4File = files.find((f: any) => f.name.endsWith('.mp4'));
+        
+        if (mp4File) {
+          stored.push({
+            vaultId: vault.id,
+            vaultName: vault.name.replace('WALTUBE_MP4_', ''),
+            fileId: mp4File.id,
+            fileName: mp4File.name,
+            fileSize: mp4File.size || 0,
+            createdAt: vault.createdAt || new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.warn(`Failed to load MP4 vault ${vault.id}:`, error);
+      }
+    }
+    
+    return NextResponse.json(stored);
+  } catch (error: any) {
+    throw new Error(`Failed to get MP4 videos: ${error.message}`);
   }
 }
