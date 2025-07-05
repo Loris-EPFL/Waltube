@@ -170,15 +170,34 @@ export default function MP4StreamPage() {
   const handleQualityChange = (quality: string) => {
     if (video && video.qualities[quality]) {
       const currentVideoTime = videoRef.current?.currentTime || 0;
-      setSelectedQuality(quality);
-      streamVideo(quality);
+      const wasPlaying = isPlaying;
       
-      // Restore playback position after quality change
+      // Pause current video and reset states
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+      setIsPlaying(false);
+      setVideoUrl('');
+      setCurrentTime(0);
+      setBuffered(0);
+      
+      // Update quality and stream new video
+      setSelectedQuality(quality);
+      
+      // Small delay to ensure state is reset
       setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = currentVideoTime;
-        }
-      }, 100);
+        streamVideo(quality);
+        
+        // Restore playback position and state after new video loads
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.currentTime = currentVideoTime;
+            if (wasPlaying) {
+              videoRef.current.play();
+            }
+          }
+        }, 200);
+      }, 50);
     }
   };
 
@@ -422,35 +441,7 @@ export default function MP4StreamPage() {
                 </div>
               </div>
               
-              {/* Quality Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Video Quality
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(video.qualities).map(([quality, qualityInfo]) => (
-                    <button
-                      key={quality}
-                      onClick={() => handleQualityChange(quality)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        selectedQuality === quality
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      {quality}
-                      <span className="block text-xs opacity-75">
-                        {(qualityInfo.fileSize / 1024 / 1024).toFixed(1)} MB
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {selectedQuality && video.qualities[selectedQuality] && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    Current: {video.qualities[selectedQuality].fileName} ({(video.qualities[selectedQuality].fileSize / 1024 / 1024).toFixed(2)} MB)
-                  </p>
-                )}
-              </div>
+
             </div>
           </div>
         )}
@@ -589,14 +580,46 @@ export default function MP4StreamPage() {
                 </button>
               </div>
 
+              {/* Quality Selection - Moved closer to video player */}
+              {video && (
+                <div className="border-t pt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Video Quality
+                  </label>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {Object.entries(video.qualities).map(([quality, qualityInfo]) => (
+                      <button
+                        key={quality}
+                        onClick={() => handleQualityChange(quality)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          selectedQuality === quality
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {quality}
+                        <span className="block text-xs opacity-75">
+                          {(qualityInfo.fileSize / 1024 / 1024).toFixed(1)} MB
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedQuality && video.qualities[selectedQuality] && (
+                    <p className="text-sm text-gray-600 mt-2 text-center">
+                      Current: {video.qualities[selectedQuality].fileName} ({(video.qualities[selectedQuality].fileSize / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Streaming Stats */}
-              <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 pt-4 border-t">
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 pt-4 border-t">
                 <div>
                   <span className="font-medium">Status:</span> {isPlaying ? 'Playing' : 'Paused'}
                 </div>
-                <div>
+                {/* <div>
                   <span className="font-medium">Buffered:</span> {formatTime(buffered)}
-                </div>
+                </div> */}
                 <div>
                   <span className="font-medium">Progress:</span> {duration > 0 ? Math.round((currentTime / duration) * 100) : 0}%
                 </div>
