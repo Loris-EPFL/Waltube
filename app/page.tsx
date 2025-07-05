@@ -49,25 +49,48 @@ export default function Home() {
       
       <div className="mt-8 text-center">
         <div className="space-y-4">
-          <a
-            href="/upload"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Upload & Process Video
-          </a>
-          <p className="text-gray-600">
-            Upload MP4 videos and automatically segment them into HLS format for adaptive streaming
-          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <a
+              href="/upload"
+              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              📤 Upload & Process Video
+            </a>
+            
+            <a
+              href="/storage"
+              className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              📁 Store to Walrus
+            </a>
+            
+            <a
+              href="/stream"
+              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              🎬 Stream Videos
+            </a>
+          </div>
           
-          <a
-            href="/storage"
-            className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4"
-          >
-            Store to Walrus
-          </a>
-          <p className="text-gray-600">
-            Upload your processed video segments to Walrus storage using Tusky SDK
-          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 max-w-4xl mx-auto">
+            <div className="text-center">
+              <p className="text-gray-600">
+                Upload MP4 videos and automatically segment them into HLS format for adaptive streaming
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-gray-600">
+                Upload your processed video segments to Walrus storage using Tusky SDK
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-gray-600">
+                Stream your stored videos directly from Walrus with progressive loading
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

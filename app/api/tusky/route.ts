@@ -49,6 +49,12 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'File ID required' }, { status: 400 });
         }
         return await handleDownload(fileId);
+      case 'stream':
+        const streamFileId = url.searchParams.get('fileId');
+        if (!streamFileId) {
+          return NextResponse.json({ error: 'File ID is required' }, { status: 400 });
+        }
+        return await handleStream(streamFileId);
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -170,5 +176,21 @@ async function handleDownload(fileId: string) {
     });
   } catch (error: any) {
     throw new Error(`Download failed: ${error.message}`);
+  }
+}
+
+async function handleStream(fileId: string) {
+  try {
+    const tusky = await getTuskyInstance();
+    const stream = await tusky.file.stream(fileId);
+    
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Cache-Control': 'no-cache'
+      }
+    });
+  } catch (error: any) {
+    throw new Error(`Stream failed: ${error.message}`);
   }
 }
