@@ -122,11 +122,9 @@ const Login = () => {
           {/* Email Authentication Card */}
           <div className="w-full bg-base-200 rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 p-6">
             <div className="w-full">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="avatar placeholder">
-                  <div className="bg-primary text-primary-content rounded-full w-12">
-                    <span className="text-xl">📧</span>
-                  </div>
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="bg-primary text-primary-content rounded-full w-12 h-12 flex items-center justify-center shrink-0">
+                  <span className="text-xl leading-none">@</span>
                 </div>
                 <h2 className="text-2xl font-bold">Email Login</h2>
               </div>
@@ -143,17 +141,19 @@ const Login = () => {
                 />
               </div>
               
-              <button
-                onClick={() => sendCodeEmail({email})}
-                className="btn btn-primary mt-4"
-                disabled={emailState === 'sending-code'}
-              >
+              <div className="flex justify-center">
+                <button
+                  onClick={() => sendCodeEmail({email})}
+                  className="btn btn-primary mt-4"
+                  disabled={emailState === 'sending-code'}
+                >
                 {emailState === 'sending-code' ? (
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : (
                   '📤 Send Verification Code'
                 )}
-              </button>
+                </button>
+              </div>
               
               {emailState !== 'initial' && emailState !== 'sending-code' && (
                 <div className="form-control mt-4">
@@ -166,13 +166,15 @@ const Login = () => {
                     placeholder="Enter 6-digit code"
                     onChange={(e) => setCodeEmail(e.currentTarget.value)}
                   />
-                  <button
-                    onClick={() => loginWithCodeEmail({code: codeEmail})}
-                    className="btn btn-success mt-4"
-                    disabled={emailState === 'initial'}
-                  >
-                    🔐 Login with Email
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => loginWithCodeEmail({code: codeEmail})}
+                      className="btn btn-success mt-4"
+                      disabled={emailState === 'initial'}
+                    >
+                      🔐 Login with Email
+                    </button>
+                  </div>
                 </div>
               )}
               

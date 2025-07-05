@@ -34,9 +34,9 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-8">Platform Features</h2>
           
           <div className="flex flex-wrap justify-center gap-6 mb-8">
-            <a href="/storage" className="btn btn-primary btn-lg gap-2 shadow-lg">
+            {/* <a href="/storage" className="btn btn-primary btn-lg gap-2 shadow-lg">
               📁 Store to Walrus
-            </a>
+            </a> */}
             <a href="/storage" className="btn btn-secondary btn-lg gap-2 shadow-lg">
               📤 Upload Videos
             </a>

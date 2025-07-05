@@ -113,7 +113,7 @@ export default function Wallets() {
     <div className="bg-base-100 shadow-lg p-6 w-full max-w-none">
       <ToastContainer />
       <div className="w-full max-w-none">
-        <h1 className="text-2xl justify-center mb-4">WALTUBE Sui Wallet</h1>
+        <h1 className="flex text-2xl justify-center mb-4">WALTUBE Sui Wallet</h1>
         
         <div className="text-center mb-6">
           <p className="text-base-content/70 mb-4">

@@ -50,10 +50,13 @@ export default function Navbar() {
       <div className="navbar-end">
         {ready && authenticated ? (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                <span className="text-sm font-bold">
-                  {user?.email?.charAt(0).toUpperCase() || user?.phone?.charAt(0) || '👤'}
+            <div tabIndex={0} role="button" className="btn btn-ghost rounded-full px-4 py-2">
+              <div className="bg-base-200 rounded-full px-3 py-2 flex items-center gap-2">
+                <span className="text-sm font-medium text-base-content">
+                  Profile
+                </span>
+                <span className="text-xs text-base-content opacity-70">
+                  {user?.email?.address || user?.phone?.number || 'User'}
                 </span>
               </div>
             </div>

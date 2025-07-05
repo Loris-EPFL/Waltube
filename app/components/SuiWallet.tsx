@@ -29,9 +29,8 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
   const [isMessagePending, setIsMessagePending] = useState(false);
   const [messageToSign, setMessageToSign] = useState('Hello from WALTUBE Sui wallet!');
   const [signedMessage, setSignedMessage] = useState<{message: string, signature: string, address: string} | null>(null);
-  
-  // Recipient address for display
-  const recipientAddress = '0x46648fb254d9d49c1ee17bd12ac55db6691595a3c38b83234d5907126074382f';
+  const [recipientAddress, setRecipientAddress] = useState('0x46648fb254d9d49c1ee17bd12ac55db6691595a3c38b83234d5907126074382f');
+  const [amountInSui, setAmountInSui] = useState('0.1');
   const { ready, authenticated, user } = usePrivy();
   const { signRawHash } = useSignRawHash();
 
@@ -204,8 +203,8 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
       // Set the sender
       tx.setSender(wallet.address);
       
-      // Add a simple transfer transaction (sending 0.1 SUI to a test address)
-      const amount = 100000000; // 0.1 SUI in MIST (1 SUI = 1,000,000,000 MIST)
+      // Add a simple transfer transaction
+      const amount = Math.floor(parseFloat(amountInSui) * 1000000000); // Convert SUI to MIST (1 SUI = 1,000,000,000 MIST)
       
       // Split coins to create the exact amount needed
       const [coin] = tx.splitCoins(tx.gas, [amount]);
@@ -385,7 +384,7 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               <div>
                 <div className="text-sm mb-1">Wallet:</div>
-                <div className="font-mono text-sm bg-base-200 p-2 rounded break-all">{wallet.address}</div>
+                <div className="font-mono text-sm bg-base-200 text-base-content p-2 rounded break-all">{wallet.address}</div>
                 <div className="text-xs opacity-70 mt-2">Using Privy's Sui Tier 2 integration</div>
               </div>
             </div>
@@ -477,19 +476,29 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
                 <label className="label">
                   <span className="label-text font-medium">To:</span>
                 </label>
-                <div className="input input-bordered font-mono text-sm break-all bg-base-200 p-3 w-full">
-                  {recipientAddress}
-                </div>
+                <input
+                  type="text"
+                  value={recipientAddress}
+                  onChange={(e) => setRecipientAddress(e.target.value)}
+                  className="input input-bordered font-mono text-sm w-full"
+                  placeholder="Enter recipient address"
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-medium">Amount:</span>
+                    <span className="label-text font-medium">Amount (SUI):</span>
                   </label>
-                  <div className="input input-bordered bg-base-200">
-                    0.1 SUI
-                  </div>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={amountInSui}
+                    onChange={(e) => setAmountInSui(e.target.value)}
+                    className="input input-bordered"
+                    placeholder="0.1"
+                  />
                 </div>
                 
                 <div className="form-control">
