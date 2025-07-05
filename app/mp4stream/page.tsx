@@ -307,18 +307,18 @@ export default function MP4StreamPage() {
         </div>
 
         {/* Connection Status */}
-        <div className="card bg-base-100 shadow-xl mb-6">
-          <div className="card-body">
-            <h2 className="card-title text-2xl mb-4">Connection Status</h2>
+        <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+          <div className="w-full">
+            <h2 className="text-2xl font-bold mb-4">Connection Status</h2>
             <div className="flex items-center space-x-4">
               <div className={`w-3 h-3 rounded-full ${
-                isConnected ? 'bg-success' : 'bg-error'
+                isConnected ? 'bg-green-500' : 'bg-red-500'
               }`}></div>
-              <span className={isConnected ? 'text-success' : 'text-error'}>
+              <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
                 {isConnected ? 'Connected to Tusky' : 'Disconnected'}
               </span>
               {isLoading && (
-                <span className="loading loading-spinner loading-sm text-primary"></span>
+                <span className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
               )}
             </div>
           </div>
@@ -326,33 +326,33 @@ export default function MP4StreamPage() {
 
         {/* Error Display */}
         {error && (
-          <div className="alert alert-error mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span><strong>Error:</strong> {error}</span>
+          <div className="w-full bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center space-x-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span className="text-red-800"><strong>Error:</strong> {error}</span>
           </div>
         )}
 
         {/* Video Info */}
         {video && (
-          <div className="card bg-base-100 shadow-xl mb-6">
-            <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">Video Information</h2>
+          <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4">Video Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="stat">
-                  <div className="stat-title">Name</div>
-                  <div className="stat-value text-lg">{video.vaultName}</div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-gray-600 mb-1">Name</div>
+                  <div className="text-lg font-semibold text-gray-900">{video.vaultName}</div>
                 </div>
-                <div className="stat">
-                  <div className="stat-title">File</div>
-                  <div className="stat-value text-lg">{video.fileName}</div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-gray-600 mb-1">File</div>
+                  <div className="text-lg font-semibold text-gray-900">{video.fileName}</div>
                 </div>
-                <div className="stat">
-                  <div className="stat-title">Size</div>
-                  <div className="stat-value text-lg">{(video.fileSize / 1024 / 1024).toFixed(2)} MB</div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-gray-600 mb-1">Size</div>
+                  <div className="text-lg font-semibold text-gray-900">{(video.fileSize / 1024 / 1024).toFixed(2)} MB</div>
                 </div>
-                <div className="stat">
-                  <div className="stat-title">Created</div>
-                  <div className="stat-value text-lg">{new Date(video.createdAt).toLocaleDateString()}</div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-gray-600 mb-1">Created</div>
+                  <div className="text-lg font-semibold text-gray-900">{new Date(video.createdAt).toLocaleDateString()}</div>
                 </div>
               </div>
             </div>
@@ -361,9 +361,9 @@ export default function MP4StreamPage() {
 
         {/* Video Player */}
         {videoUrl && (
-          <div className="card bg-base-100 shadow-xl mb-6">
-            <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">Video Player</h2>
+          <div className="w-full bg-white rounded-lg shadow-xl p-6 mb-6">
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4">Video Player</h2>
             
             <div className="relative bg-black rounded-lg overflow-hidden mb-4">
               <video
@@ -514,13 +514,13 @@ export default function MP4StreamPage() {
         <div className="text-center space-x-4">
           <Link
             href="/storage"
-            className="btn btn-neutral"
+            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors inline-block"
           >
             ← Back to Storage
           </Link>
           {/* <Link
             href="/stream"
-            className="btn btn-success"
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-block"
           >
             🎬 Try HLS Streaming
           </Link> */}
