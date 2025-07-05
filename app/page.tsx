@@ -46,6 +46,30 @@ export default function Home() {
           <Wallets />
         </div>
       </div>
+      
+      <div className="mt-8 text-center">
+        <div className="space-y-4">
+          <a
+            href="/upload"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Upload & Process Video
+          </a>
+          <p className="text-gray-600">
+            Upload MP4 videos and automatically segment them into HLS format for adaptive streaming
+          </p>
+          
+          <a
+            href="/storage"
+            className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4"
+          >
+            Store to Walrus
+          </a>
+          <p className="text-gray-600">
+            Upload your processed video segments to Walrus storage using Tusky SDK
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
