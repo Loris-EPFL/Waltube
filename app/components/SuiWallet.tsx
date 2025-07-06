@@ -39,7 +39,7 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
   const [videoTitle, setVideoTitle] = useState('');
   const [videoDescription, setVideoDescription] = useState('');
   const [vaultId, setVaultId] = useState('');
-  const [contractAction, setContractAction] = useState<'add_video' | 'edit_video' | 'delete_video' | 'create_user' | 'edit_user'>('add_video');
+  const [contractAction, setContractAction] = useState<'add_video' | 'edit_video' | 'delete_video' | 'create_user' | 'edit_user'>('create_user');
   
   // User creation/editing states
   const [userName, setUserName] = useState('');
@@ -618,7 +618,7 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               {!isWalletReady ? 'Initializing...' : 
-               isContractPending ? 'Pending...' : 'Smart Contract'}
+               isContractPending ? 'Pending...' : 'Edit User Profile Onchain'}
             </button>
           </div>
         </div>
@@ -792,8 +792,28 @@ const SuiWallet: React.FC<SuiWalletProps> = ({ wallet, index }) => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              WALTUBE Smart Contract
+              Edit User Profile Onchain
             </h2>
+            
+            {/* Gas Faucet Disclaimer */}
+            <div className="alert alert-warning mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 w-6 h-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+              <div>
+                <div className="font-bold mb-2">⚠️ Need gas for transactions?</div>
+                <div className="text-sm mb-2">Get free testnet SUI tokens from the faucet:</div>
+                <a 
+                  href="https://faucet.sui.io/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="link link-primary font-medium"
+                >
+                  🚰 Sui Testnet Faucet
+                </a>
+                <div className="text-xs mt-2 opacity-70">
+                  Disclaimer: This is for testnet only. Never share your private keys or seed phrases.
+                </div>
+              </div>
+            </div>
             
             <div className="alert alert-info mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>

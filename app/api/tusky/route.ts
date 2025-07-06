@@ -1,17 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Tusky } from '@tusky-io/ts-sdk';
 
-// Hardcoded API key from environment
-const TUSKY_API_KEY = '305842a1-27d9-4510-ac66-3339580fb91f';
+// Get API key from environment
+const TUSKY_API_KEY = process.env.TUSKY_API_KEY;
 
 // Global Tusky instance
 let tuskyInstance: any = null;
 
+// Reset Tusky instance (useful for reconnection)
+function resetTuskyInstance() {
+  tuskyInstance = null;
+}
+
 // Initialize Tusky instance
 async function getTuskyInstance() {
+  if (!TUSKY_API_KEY) {
+    throw new Error('TUSKY_API_KEY environment variable is not set');
+  }
+  
   if (!tuskyInstance) {
-    tuskyInstance = new Tusky({ apiKey: TUSKY_API_KEY });
-    await tuskyInstance.auth.signIn();
+    try {
+      // Initialize Tusky with API key
+      tuskyInstance = new Tusky({ apiKey: TUSKY_API_KEY });
+      
+      // Check if the SDK requires explicit sign-in or if API key is sufficient
+      // Some versions of Tusky SDK may not require explicit signIn() call
+      try {
+        await tuskyInstance.auth.signIn();
+      } catch (authError: any) {
+        // If signIn fails but the instance is created, it might work without explicit auth
+        console.warn('Auth signIn failed, but continuing with API key auth:', authError.message);
+        
+        // Test if the instance works by trying a simple operation
+        try {
+          await tuskyInstance.vault.listAll();
+          console.log('Tusky instance working without explicit signIn');
+        } catch (testError: any) {
+          console.error('Tusky instance test failed:', testError);
+          tuskyInstance = null;
+          throw new Error(`Failed to authenticate with Tusky: ${authError.message}`);
+        }
+      }
+    } catch (error: any) {
+      console.error('Tusky initialization failed:', error);
+      tuskyInstance = null;
+      throw new Error(`Failed to initialize Tusky: ${error.message}`);
+    }
   }
   return tuskyInstance;
 }
@@ -70,9 +104,22 @@ export async function GET(request: NextRequest) {
 
 async function handleConnect() {
   try {
-    await getTuskyInstance();
-    return NextResponse.json({ success: true, message: 'Connected to Tusky' });
+    // Reset instance to force fresh connection
+    resetTuskyInstance();
+    
+    const tusky = await getTuskyInstance();
+    
+    // Test the connection with a simple operation
+    await tusky.vault.listAll();
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Connected to Tusky successfully',
+      apiKeyConfigured: !!TUSKY_API_KEY
+    });
   } catch (error: any) {
+    console.error('Connection test failed:', error);
+    resetTuskyInstance();
     throw new Error(`Failed to connect to Tusky: ${error.message}`);
   }
 }
