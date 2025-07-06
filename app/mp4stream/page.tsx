@@ -39,6 +39,27 @@ const sliderStyles = `
     background: transparent;
     border-radius: 4px;
   }
+  
+  .fullscreen-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .fullscreen-container video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+  }
 `;
 
 interface MP4Video {
@@ -76,12 +97,14 @@ export default function MP4StreamPage() {
   const [buffered, setBuffered] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isSeeking, setIsSeeking] = useState(false);
   const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSeekTimeRef = useRef<number>(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   // Connect to Tusky
   const connectToTusky = async () => {
@@ -213,9 +236,10 @@ export default function MP4StreamPage() {
   const handleTimeUpdate = () => {
     if (videoRef.current && !isSeeking) {
       const currentVideoTime = videoRef.current.currentTime;
-      // Only update if the time has actually changed significantly
+      // Only update if the time has actually changed significantly and we're not seeking
       if (Math.abs(currentVideoTime - currentTime) > 0.1) {
         setCurrentTime(currentVideoTime);
+        lastSeekTimeRef.current = currentVideoTime;
       }
     }
   };
@@ -223,8 +247,8 @@ export default function MP4StreamPage() {
     console.log('Video metadata loaded, duration:', videoRef.current?.duration);
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
-      // Restore last seek position if video was reloaded
-      if (lastSeekTimeRef.current > 0) {
+      // Only restore seek position if we're not currently seeking and it's a genuine reload
+      if (lastSeekTimeRef.current > 0 && !isSeeking && videoRef.current.currentTime === 0) {
         console.log('Restoring seek position to:', lastSeekTimeRef.current);
         videoRef.current.currentTime = lastSeekTimeRef.current;
         setCurrentTime(lastSeekTimeRef.current);
@@ -246,13 +270,11 @@ export default function MP4StreamPage() {
   const handleSeeking = () => {
     const seekTime = videoRef.current?.currentTime;
     console.log('Video seeking to:', seekTime);
-    // Just log the seeking event, don't interfere
   };
 
   const togglePlayback = () => {
     if (videoRef.current) {
       if (isPlaying) {
-
         videoRef.current.pause();
       } else {
         videoRef.current.play();
@@ -260,22 +282,12 @@ export default function MP4StreamPage() {
     }
   };
 
-  const handleSeekInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Update visual state and store intended position
-    const newTime = parseFloat(e.target.value);
-    setCurrentTime(newTime);
-    lastSeekTimeRef.current = newTime;
-    console.log('Seek input to:', newTime);
-  };
-
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // This is called on onChange - only set video time once
-    if (videoRef.current && !isSeeking) {
-      const newTime = parseFloat(e.target.value);
-      console.log('Setting video time to:', newTime);
-      videoRef.current.currentTime = newTime;
-      lastSeekTimeRef.current = newTime;
-    }
+    // This is called on onChange - only update state, don't set video time yet
+    const newTime = parseFloat(e.target.value);
+    console.log('Seek onChange to:', newTime);
+    lastSeekTimeRef.current = newTime;
+    setCurrentTime(newTime);
   };
 
   const handleSeekStart = () => {
@@ -288,12 +300,14 @@ export default function MP4StreamPage() {
 
   const handleSeekEnd = () => {
     console.log('Seek end');
-    // Simply reset seeking state without forcing position
-    setIsSeeking(false);
-    if (videoRef.current) {
-      console.log('Final seek position:', videoRef.current.currentTime);
-      setCurrentTime(videoRef.current.currentTime);
+    // Apply the final seek position and reset seeking state
+    if (videoRef.current && lastSeekTimeRef.current !== undefined) {
+      console.log('Final seek position set to:', lastSeekTimeRef.current);
+      videoRef.current.currentTime = lastSeekTimeRef.current;
+      setCurrentTime(lastSeekTimeRef.current);
     }
+    // Reset seeking state immediately
+    setIsSeeking(false);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,6 +338,48 @@ export default function MP4StreamPage() {
   const handleVideoClick = () => {
     togglePlayback();
   };
+
+  const toggleFullscreen = async () => {
+    if (!videoContainerRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await videoContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  };
+
+  // Listen for fullscreen changes and keyboard events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      if (event.key === 'f' || event.key === 'F') {
+        if (document.activeElement?.tagName !== 'INPUT') {
+          event.preventDefault();
+          toggleFullscreen();
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -452,7 +508,7 @@ export default function MP4StreamPage() {
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4">Video Player</h2>
             
-            <div className="relative bg-black rounded-lg overflow-hidden mb-4">
+            <div ref={videoContainerRef} className={`relative bg-black rounded-lg overflow-hidden mb-4 ${isFullscreen ? 'fullscreen-container' : ''}`}>
               <video
                 ref={videoRef}
                 src={videoUrl}
@@ -504,8 +560,7 @@ export default function MP4StreamPage() {
                   type="range"
                   min="0"
                   max={duration || 0}
-                  value={isSeeking ? (videoRef.current?.currentTime || currentTime) : currentTime}
-                  onInput={handleSeekInput}
+                  value={currentTime}
                   onChange={handleSeek}
                   onMouseDown={handleSeekStart}
                   onMouseUp={handleSeekEnd}
@@ -575,6 +630,26 @@ export default function MP4StreamPage() {
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                       </svg>
                       <span>Play</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={toggleFullscreen}
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                >
+                  {isFullscreen ? (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                      <span>Exit Fullscreen</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                      <span>Fullscreen</span>
                     </>
                   )}
                 </button>
