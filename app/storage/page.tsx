@@ -31,6 +31,20 @@ interface StoredMP4Video {
   mp4FileId: string;
   createdAt: string;
   fileSize: number;
+  totalSize: number;
+  qualityCount: number;
+  thumbnail?: {
+    fileId: string;
+    fileName: string;
+    fileSize: number;
+  };
+  qualities: {
+    [quality: string]: {
+      fileId: string;
+      fileName: string;
+      fileSize: number;
+    };
+  };
 }
 
 const VideoStoragePage: React.FC = () => {
