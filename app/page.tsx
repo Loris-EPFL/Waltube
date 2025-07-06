@@ -40,12 +40,15 @@ export default function Home() {
             <a href="/storage" className="btn btn-secondary btn-lg gap-2 shadow-lg">
               📤 Upload Videos
             </a>
+            <a href="/gallery" className="btn btn-primary btn-lg gap-2 shadow-lg">
+              🎬 Video Gallery
+            </a>
             <a href="/mp4stream" className="btn btn-accent btn-lg gap-2 shadow-lg">
-              🎬 Stream Content
+              🎥 Stream Content
             </a>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
             <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
               <div className="text-center">
                 <div className="text-4xl mb-4">📁</div>
@@ -69,6 +72,16 @@ export default function Home() {
             <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
               <div className="text-center">
                 <div className="text-4xl mb-4">🎬</div>
+                <h3 className="text-lg font-bold mb-2">Video Gallery</h3>
+                <p className="text-base-content opacity-70">
+                  Browse and discover videos from all users. Stream any video using its public vault ID.
+                </p>
+              </div>
+            </div>
+            
+            <div className="w-full bg-base-200 rounded-lg shadow-lg p-6">
+              <div className="text-center">
+                <div className="text-4xl mb-4">🎥</div>
                 <h3 className="text-lg font-bold mb-2">Video Streaming</h3>
                 <p className="text-base-content opacity-70">
                   Stream your stored videos directly from Walrus with progressive loading and high quality

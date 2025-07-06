@@ -794,7 +794,7 @@ const VideoStoragePage: React.FC = () => {
                     Uploading MP4 with {selectedQualities.length} qualities...
                   </>
                 ) : (
-                  `Upload MP4 with ${selectedQualities.length} Quality${selectedQualities.length !== 1 ? 'ies' : ''}`
+                  `Upload MP4 with ${selectedQualities.length} Qualit${selectedQualities.length !== 1 ? 'ies' : 'y'}`
                 )}
               </button>
               
