@@ -1,53 +1,105 @@
-# Privy Whitelabel Starter
 
-This is a template for integrating whitelabel [**Privy**](https://www.privy.io/) into a [NextJS](https://nextjs.org/) project. Check out the deployed app [here](https://whitelabel.privy.io/)!
+# 🎥 WalTube
 
-This demo uses NextJS's [App Router](https://nextjs.org/docs/app).
+**Decentralized YouTube alternative powered by Web3, decentralized storage, and blazing-fast performance.**
 
-## Setup Privy App
+WalTube is a decentralized video streaming platform built using **Next.js 14**, **Tusky**, and **Privy**. It enables users to upload, store, and stream high-quality videos with **full ownership**, **secure wallet-based authentication**, and **distributed content delivery**—all through a sleek, responsive UI.
 
-1. Enable all the login methods you want to use in the [dashboard](https://dashboard.privy.io/apps?page=login-methods).
+---
 
-2. [optional] Enable guest accounts in the [dashboard](https://dashboard.privy.io/apps?page=settings) under Settings > Advanced settings > Guest accounts.
+## 🚀 Features
 
-3. Enable smart wallets in the [dashboard](https://dashboard.privy.io/apps?page=embedded&tab=smart-wallets) or remove <SmartWalletProvider/> in app/providers if you do not wish to use them.
+### 🧑‍💻 Web3 Authentication
+- Built-in **Privy SDK** for seamless login with MetaMask, WalletConnect, and more.
+- Secure session handling using environment variable-based token configuration.
+- Web2-style onboarding for both crypto-native and non-crypto users.
 
-## Setup Repository
+### 📁 Decentralized Storage
+- Integrates with **Tusky SDK** for:
+  - Cost-efficient, distributed video storage.
+  - Seamless video retrieval with automatic quality fallback.
+  - Backend routing via custom `/api/tusky` endpoints.
 
-1. Clone this repository and open it in your terminal.
+### 📺 Advanced Video Player
+- Built from scratch using native HTML5 APIs.
+- Fullscreen mode, keyboard shortcuts (`F`, `Esc`), and custom controls.
+- Visual seekbar, buffer indicators, and volume/mute toggles.
+- **Supports MP4** and **HLS streaming**, including adaptive quality (360p to 1080p).
 
-```sh
-git clone https://github.com/privy-io/whitelabel-starter.git
-```
+### ⚙️ Streaming & Performance
+- Real-time stats & streaming health.
+- Dynamic routing with **App Router** and URL-based video loading.
+- **Suspense boundaries** for async loading and smooth navigation.
+- Optimized buffer & seek restoration.
 
-2. Install the necessary dependencies (including [Privy Auth](https://www.npmjs.com/package/@privy-io/react-auth)) with `yarn`.
+### 🎨 Modern UI
+- Responsive layout with **Tailwind CSS**.
+- Mobile-friendly video experience.
+- Minimalistic design optimized for user engagement.
 
-```sh
+### 🛠 Deployment
+- Production-ready deployment via **Vercel**.
+- Environment-secured API keys.
+- ESLint + TypeScript for robust developer experience.
+
+---
+
+## 🔐 Tech Stack
+
+| Feature             | Stack                             |
+|---------------------|------------------------------------|
+| Frontend Framework  | Next.js 14 (App Router)            |
+| Styling             | Tailwind CSS                      |
+| Auth                | Privy SDK                         |
+| Storage             | Tusky SDK                         |
+| Language            | TypeScript                        |
+| Hosting             | Vercel                            |
+| Video Formats       | MP4, HLS                          |
+
+---
+
+## 🧠 Why WalTube?
+
+- **No platform lock-in**: Your content lives on decentralized infrastructure.
+- **No ads or surveillance**: You control the content. Not algorithms.
+- **Web3-native, Web2-smooth**: Seamless login, real-time playback, and blazing UX.
+
+---
+
+## 📦 Local Development
+
+```bash
+# Install dependencies
 yarn install
+
+# Run dev server
+yarn dev
 ```
 
-3. Initialize your environment variables by copying the `.env.example` file to an `.env.local` file. Then, in `.env.local`, [paste your Privy App ID from the dashboard](https://docs.privy.io/guide/dashboard/api-keys).
+Environment variables:
 
-```sh
-# In your terminal, create .env.local from .env.example
-cp .env.example .env.local
-
-# Add your Privy App ID to .env.local
-NEXT_PUBLIC_PRIVY_APP_ID=<your-privy-app-id>
+```
+PRIVY_APP_ID=...
+TUSKY_API_KEY=...
+NEXT_PUBLIC_TUSKY_GATEWAY_URL=https://...
 ```
 
-## Building locally
+---
 
-In your project directory, run `yarn dev`. You can now visit http://localhost:3000 to see your app and login with Privy!
+## 🧪 Roadmap
 
-## Check out:
+- [x] Web3 Login via Privy
+- [x] Upload and playback via Tusky
+- [x] Multi-resolution support
+- [x] Responsive design
+- [ ] Comments and likes
+- [ ] Creator analytics dashboard
+- [ ] NFT video publishing (future)
 
-- `app/providers.tsx` for how to use the `PrivyProvider` and initialize it with your Privy App ID
-- `app/components/Login.tsx` for whitelabel login methods
-- `app/components/Wallets.tsx` for how to create wallets, send transactions and sign messages in a whitelabeled experience
+---
 
-## Optional features:
+## 📸 Preview
 
-- OAuth methods can be enabled on the dashboard [here](https://dashboard.privy.io/apps?page=login-methods&logins=socials)
+> Coming soon…
 
-**Check out [our docs](https://docs.privy.io/) for more guidance around using Privy in your app!**
+---
