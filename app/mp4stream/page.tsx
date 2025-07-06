@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
+
+// Force dynamic rendering to prevent static generation
+export const dynamic = 'force-dynamic';
 
 // Custom styles for the range slider
 const sliderStyles = `
@@ -82,7 +85,7 @@ interface MP4Video {
   createdAt: string;
 }
 
-export default function MP4StreamPage() {
+function MP4StreamContent() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get('video');
   
@@ -720,5 +723,25 @@ export default function MP4StreamPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MP4StreamPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading video player...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <MP4StreamContent />
+    </Suspense>
   );
 }

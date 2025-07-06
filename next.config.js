@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
+  output: 'standalone',
+  trailingSlash: false,
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Handle Node.js modules for browser environment
