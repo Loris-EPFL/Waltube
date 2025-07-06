@@ -55,6 +55,7 @@ WalTube is a decentralized video streaming platform built using **Next.js 14**, 
 | Language            | TypeScript                        |
 | Hosting             | Vercel                            |
 | Video Formats       | MP4, HLS                          |
+| Smart Contracts     | Sui Move                          |
 
 ---
 
@@ -95,11 +96,5 @@ NEXT_PUBLIC_TUSKY_GATEWAY_URL=https://...
 - [ ] Comments and likes
 - [ ] Creator analytics dashboard
 - [ ] NFT video publishing (future)
-
----
-
-## 📸 Preview
-
-> Coming soon…
-
+- [ ] Video encryption for financial incentivizing
 ---
