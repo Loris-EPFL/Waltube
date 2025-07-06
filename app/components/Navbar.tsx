@@ -31,6 +31,7 @@ export default function Navbar() {
           >
             <li><Link href="/">Home</Link></li>
             <li><Link href="/storage">Storage</Link></li>
+            <li><Link href="/gallery">Gallery</Link></li>
             <li><Link href="/mp4stream">MP4 Stream</Link></li>
           </ul>
         </div>
@@ -43,6 +44,7 @@ export default function Navbar() {
         <ul className="menu menu-horizontal px-1">
           <li><Link href="/" className="btn btn-ghost">Home</Link></li>
           <li><Link href="/storage" className="btn btn-ghost">📁 Storage</Link></li>
+          <li><Link href="/gallery" className="btn btn-ghost">🖼️ Gallery</Link></li>
           <li><Link href="/mp4stream" className="btn btn-ghost">🎬 MP4 Stream</Link></li>
         </ul>
       </div>
