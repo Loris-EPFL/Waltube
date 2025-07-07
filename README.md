@@ -5,7 +5,12 @@
 
 WalTube is a decentralized video streaming platform built using **Next.js 14**, **Tusky**, and **Privy**. It enables users to upload, store, and stream high-quality videos with **full ownership**, **secure wallet-based authentication**, and **distributed content delivery**—all through a sleek, responsive UI.
 
+[Waltube Showcase on ETHGlobal](https://ethglobal.com/showcase/waltube-vsojp) – Project featured on the ETHGlobal Showcase.
+
+
 ---
+
+
 
 ## 🚀 Features
 
